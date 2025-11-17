@@ -1,4 +1,5 @@
 import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Tabs } from "antd";
 import { NextPage } from "next";
 import Head from "next/head";
@@ -20,7 +21,7 @@ const AuthPage: NextPage = () => {
             {
               label: "Регистрация",
               key: "2",
-              children: <h1>Регистрация</h1>,
+              children: <RegisterForm />,
             },
           ]}
         />
