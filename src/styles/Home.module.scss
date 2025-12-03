@@ -1,10 +1,219 @@
+// Основной контейнер приложения
+.main {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  min-height: calc(100vh - 64px);
+  background: linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%);
+}
+
+// Layout контейнер
+.layout {
+  display: flex;
+  flex-direction: row;
+  min-height: calc(100vh - 128px);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+// Dashboard контейнер
+.dashboardContainer {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  width: 100%;
+  min-height: calc(100vh - 128px);
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Боковая панель
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 28px 24px;
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  border-right: 1px solid #e9ecef;
+  gap: 24px;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, #e9ecef 20%, #e9ecef 80%, transparent);
+  }
+
+  :global(.div) {
+    .ant-btn {
+      height: 44px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(0, 113, 206, 0.2);
+      transition: all 0.3s ease;
+      border: none;
+      background: linear-gradient(135deg, #0071ce 0%, #005a9e 100%);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 113, 206, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+// Меню в сайдбаре
+.menu {
+  margin-top: 8px;
+  padding: 0;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+
+  :global(.div) {
+    .ant-menu-item {
+      border-radius: 10px;
+      margin: 4px 0 !important;
+      padding: 12px 16px !important;
+      height: auto !important;
+      line-height: 1.5 !important;
+      transition: all 0.2s ease;
+      font-size: 15px;
+      font-weight: 500;
+
+      &:hover {
+        background-color: #f0f4f8 !important;
+        transform: translateX(4px);
+      }
+
+      &.ant-menu-item-selected {
+        background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%) !important;
+        color: #0071ce !important;
+        font-weight: 600;
+
+        &::after {
+          display: none;
+        }
+      }
+
+      .anticon {
+        font-size: 18px;
+        margin-right: 12px;
+      }
+    }
+  }
+}
+
+// Контейнер контента
+.container {
+  padding: 0;
+  width: 100%;
+  background: #ffffff;
+  min-height: calc(100vh - 128px);
+  display: flex;
+  flex-direction: column;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+}
+
+.pageDescription {
+  font-size: 16px;
+  color: #718096;
+  margin: 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 2px dashed #dee2e6;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #0071ce;
+    background: linear-gradient(135deg, #f0f4f8 0%, #ffffff 100%);
+  }
+}
+
+.emptyIcon {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+
+  :global(.div) {
+    .anticon {
+      font-size: 64px;
+      color: #0071ce;
+    }
+  }
+
+  .emptyState:hover & {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(0, 113, 206, 0.2);
+  }
+}
+
+.emptyTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.emptyDescription {
+  font-size: 16px;
+  color: #718096;
+  margin: 0;
+  max-width: 400px;
+}
+
+// Старые стили для других страниц (если используются)
 .page {
   --background: #fafafa;
   --foreground: #fff;
-
   --text-primary: #000;
   --text-secondary: #666;
-
   --button-primary-hover: #383838;
   --button-secondary-hover: #f2f2f2;
   --button-secondary-border: #ebebeb;
@@ -15,18 +224,6 @@
   justify-content: center;
   font-family: var(--font-geist-sans);
   background-color: var(--background);
-}
-
-.main {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  max-width: 800px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  background-color: var(--foreground);
-  padding: 120px 60px;
 }
 
 .intro {
@@ -106,9 +303,49 @@ a.secondary {
   }
 }
 
+// Адаптивность
+@media (max-width: 1024px) {
+  .dashboardContainer {
+    grid-template-columns: 240px 1fr;
+  }
+
+  .sidebar {
+    padding: 20px;
+  }
+
+  .container {
+    padding: 24px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding: 16px;
+  }
+
+  .dashboardContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    padding: 16px;
+  }
+
+  .container {
+    padding: 20px;
+  }
+
+  .container h1 {
+    font-size: 24px;
+  }
+}
+
 @media (max-width: 600px) {
   .main {
-    padding: 48px 24px;
+    padding: 12px;
   }
 
   .intro {
@@ -123,17 +360,11 @@ a.secondary {
 }
 
 @media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
-  }
-
   .page {
     --background: #000;
     --foreground: #000;
-
     --text-primary: #ededed;
     --text-secondary: #999;
-
     --button-primary-hover: #ccc;
     --button-secondary-hover: #1a1a1a;
     --button-secondary-border: #1a1a1a;

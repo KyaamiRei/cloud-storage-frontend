@@ -1,0 +1,44 @@
+.root {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+  padding: 32px;
+  width: 100%;
+  min-height: 200px;
+  background: #ffffff;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+    padding: 28px 24px;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 24px 16px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 16px 12px;
+  }
+}
+
+.fileItem {
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.active {
+    z-index: 10;
+  }
+
+  // Стили для выделения через Selecto
+  :global(.div) {
+    &.selecto-selected {
+      z-index: 5;
+    }
+  }
+}

@@ -1,13 +1,22 @@
-.main {
-  width: 1200px;
-  margin: 40px auto;
+/* Глобальные стили для улучшения внешнего вида приложения */
+
+* {
+  box-sizing: border-box;
 }
 
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  width: 250px;
-  padding: 20px;
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  min-height: 100vh;
 }
 
 .upload {
@@ -17,21 +26,35 @@
   }
 }
 
-.layout {
-  display: flex;
-  flex-direction: row;
-  min-height: 600px;
-  background: #fff;
-  border-radius: 15px;
-}
+/* Улучшенные стили для Empty компонента */
+.body {
+  .empty-block {
+    padding: 60px 20px;
 
-.menu {
-  margin-top: 20px;
-  padding-right: 10px;
-  height: 100%;
-}
+    .ant-empty-description {
+      color: #718096;
+      font-size: 16px;
+    }
 
-.dashboardContainer {
-  display: grid;
-  grid-template-columns: 0.3fr 1fr;
+    .ant-empty-image {
+      opacity: 0.6;
+    }
+  }
+
+  /* Улучшенные стили для Popconfirm */
+  .ant-popover {
+    .ant-popover-inner {
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  /* Улучшенные стили для уведомлений */
+  .ant-notification {
+    .ant-notification-notice {
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+    }
+  }
 }

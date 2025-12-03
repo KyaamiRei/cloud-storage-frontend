@@ -17,6 +17,8 @@
     "nookies": "^2.5.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-selecto": "^1.26.3",
     "sass": "^1.94.0"
   },
   "devDependencies": {

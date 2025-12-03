@@ -43,46 +43,55 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className={styles.root}>
+    <>
       {contextHolder}
       <Form
-        name="basik"
-        labelCol={{ span: 8 }}
-        onFinish={onSubmit}>
+        name="login"
+        layout="vertical"
+        onFinish={onSubmit}
+        autoComplete="off">
         <Form.Item
           label="E-mail"
           name="email"
           rules={[
             {
               required: true,
-              message: "Укажиите почту",
+              message: "Укажите почту",
+            },
+            {
+              type: "email",
+              message: "Введите корректный email",
             },
           ]}>
-          <Input />
+          <Input
+            placeholder="example@mail.com"
+            size="large"
+          />
         </Form.Item>
         <Form.Item
-          label="Password"
+          label="Пароль"
           name="password"
           rules={[
             {
               required: true,
-              message: "Укажиите пороль",
+              message: "Укажите пароль",
             },
           ]}>
-          <Input.Password />
+          <Input.Password
+            placeholder="Введите пароль"
+            size="large"
+          />
         </Form.Item>
-        <Form.Item
-          wrapperCol={{
-            offset: 8,
-            span: 16,
-          }}>
+        <Form.Item>
           <Button
             type="primary"
-            htmlType="submit">
+            htmlType="submit"
+            size="large"
+            block>
             Войти
           </Button>
         </Form.Item>
       </Form>
-    </div>
+    </>
   );
 };

@@ -45,22 +45,30 @@ export const RegisterForm = () => {
   };
 
   return (
-    <div className={styles.root}>
+    <>
       {contextHolder}
       <Form
-        name="basik"
-        labelCol={{ span: 8 }}
-        onFinish={onSubmit}>
+        name="register"
+        layout="vertical"
+        onFinish={onSubmit}
+        autoComplete="off">
         <Form.Item
           label="E-mail"
           name="email"
           rules={[
             {
               required: true,
-              message: "Укажиите почту",
+              message: "Укажите почту",
+            },
+            {
+              type: "email",
+              message: "Введите корректный email",
             },
           ]}>
-          <Input />
+          <Input
+            placeholder="example@mail.com"
+            size="large"
+          />
         </Form.Item>
 
         <Form.Item
@@ -71,34 +79,46 @@ export const RegisterForm = () => {
               required: true,
               message: "Укажите полное имя",
             },
+            {
+              min: 2,
+              message: "Имя должно содержать минимум 2 символа",
+            },
           ]}>
-          <Input />
+          <Input
+            placeholder="Иван Иванов"
+            size="large"
+          />
         </Form.Item>
 
         <Form.Item
-          label="Password"
+          label="Пароль"
           name="password"
           rules={[
             {
               required: true,
-              message: "Укажиите пороль",
+              message: "Укажите пароль",
+            },
+            {
+              min: 6,
+              message: "Пароль должен содержать минимум 6 символов",
             },
           ]}>
-          <Input.Password />
+          <Input.Password
+            placeholder="Введите пароль"
+            size="large"
+          />
         </Form.Item>
 
-        <Form.Item
-          wrapperCol={{
-            offset: 8,
-            span: 16,
-          }}>
+        <Form.Item>
           <Button
             type="primary"
-            htmlType="submit">
+            htmlType="submit"
+            size="large"
+            block>
             Зарегистрироваться
           </Button>
         </Form.Item>
       </Form>
-    </div>
+    </>
   );
 };

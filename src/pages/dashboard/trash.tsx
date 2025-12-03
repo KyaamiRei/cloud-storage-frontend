@@ -1,34 +1,28 @@
 import { GetServerSidePropsContext, NextPage } from "next";
-
 import { checkAuth } from "@/utils/checkAuth";
 import React from "react";
+import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
-
-import { Layout } from "@/layouts/Layout";
 import { FileItem } from "@/api/dto/files.dto";
-import { Files } from "@/modules/Files";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { Files } from '@/modules/Files';
 
 interface Props {
   items: FileItem[];
 }
 
-const DashboardPage: NextPage<Props> = ({ items }) => {
+const DashboardTrash: NextPage<Props> = ({ items }) => {
   return (
     <DashboardLayout>
-      <Files
-        items={items}
-        withActions
-      />
+      <Files items={items} />
     </DashboardLayout>
   );
 };
 
-(DashboardPage as NextPage & { getLayout?: (page: React.ReactNode) => React.ReactNode }).getLayout =
-  (page: React.ReactNode) => {
-    return <Layout title="Dashboard / Главная">{page}</Layout>;
-  };
+(DashboardTrash as typeof DashboardTrash & { getLayout?: (page: React.ReactNode) => React.ReactNode }).getLayout = (page: React.ReactNode) => {
+  return <Layout title="Dashboard / Корзина">{page}</Layout>;
+};
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const authProps = await checkAuth(ctx);
@@ -38,7 +32,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   try {
-    const items = await Api.files.getAll();
+    const items = await Api.files.getAll("trash");
 
     return {
       props: {
@@ -53,4 +47,4 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 };
 
-export default DashboardPage;
+export default DashboardTrash;
