@@ -6,7 +6,7 @@ import React from "react";
 
 import * as Api from "@/api";
 
-import styles from "@/components/auth/Auth.module.scss";
+import styles from "@/components/Auth/Auth.module.scss";
 
 export const RegisterForm = () => {
   const [api, contextHolder] = notification.useNotification();

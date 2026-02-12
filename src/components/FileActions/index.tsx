@@ -4,22 +4,28 @@ import { Button, Popconfirm } from "antd";
 
 interface FileActionsProps {
   onClickRemove: VoidFunction;
-  onClickShare: VoidFunction;
+  onClickDownload?: VoidFunction;
   isActive: boolean;
+  isDownload?: boolean;
 }
 
 export const FileActions: React.FC<FileActionsProps> = ({
   onClickRemove,
-  onClickShare,
+  onClickDownload,
   isActive,
+  isDownload,
 }) => {
   return (
     <div className={styles.root}>
-      <Button
-        onClick={onClickShare}
-        disabled={!isActive}>
-        Поделиться
-      </Button>
+      {isDownload ? (
+        <Button
+          onClick={onClickDownload}
+          disabled={!isActive}>
+          Скачать
+        </Button>
+      ) : (
+        ""
+      )}
 
       <Popconfirm
         title="Удалить файл(ы)?"

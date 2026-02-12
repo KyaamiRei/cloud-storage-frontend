@@ -1,9 +1,9 @@
-import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
+import { LoginForm } from "@/components/Auth/LoginForm";
+import { RegisterForm } from "@/components/Auth/RegisterForm";
 import { Tabs } from "antd";
 import { NextPage } from "next";
 import Head from "next/head";
-import styles from "@/components/auth/Auth.module.scss";
+import styles from "@/components/Auth/Auth.module.scss";
 
 const AuthPage: NextPage = () => {
   return (

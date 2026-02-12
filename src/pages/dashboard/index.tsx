@@ -9,6 +9,7 @@ import { Layout } from "@/layouts/Layout";
 import { FileItem } from "@/api/dto/files.dto";
 import { Files } from "@/modules/Files";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import styles from "@/styles/Home.module.scss";
 
 interface Props {
   items: FileItem[];
@@ -17,17 +18,25 @@ interface Props {
 const DashboardPage: NextPage<Props> = ({ items }) => {
   return (
     <DashboardLayout>
-      <Files
-        items={items}
-        withActions
-      />
+      <div className={styles.pageContent}>
+        <div className={styles.pageHeader}>
+          <h1>Мои файлы</h1>
+          <p className={styles.pageDescription}>
+            Все ваши файлы в одном месте
+          </p>
+        </div>
+        <Files
+          items={items}
+          withActions
+        />
+      </div>
     </DashboardLayout>
   );
 };
 
 (DashboardPage as NextPage & { getLayout?: (page: React.ReactNode) => React.ReactNode }).getLayout =
   (page: React.ReactNode) => {
-    return <Layout title="Dashboard / Главная">{page}</Layout>;
+    return <Layout title="Мои файлы - CloudDrive">{page}</Layout>;
   };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {

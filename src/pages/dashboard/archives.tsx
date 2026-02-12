@@ -1,6 +1,6 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React, { JSX } from "react";
+import React from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
@@ -13,31 +13,30 @@ interface Props {
   items: FileItem[];
 }
 
-const DashboardPhotos: NextPage<Props> = ({ items }) => {
+const DashboardArchives: NextPage<Props> = ({ items }) => {
   return (
     <DashboardLayout>
       <div className={styles.pageContent}>
         <div className={styles.pageHeader}>
-          <h1>Фото</h1>
+          <h1>Архивы</h1>
           <p className={styles.pageDescription}>
-            Все ваши изображения
+            ZIP, RAR и другие архивы
           </p>
         </div>
         <Files
           items={items}
           withActions
-          defaultFilter="image"
+          defaultFilter="archive"
         />
       </div>
     </DashboardLayout>
   );
 };
 
-(
-  DashboardPhotos as NextPage<Props> & { getLayout?: (page: React.ReactNode) => JSX.Element }
-).getLayout = (page: React.ReactNode) => {
-  return <Layout title="Фото - CloudDrive">{page}</Layout>;
-};
+(DashboardArchives as NextPage<Props> & { getLayout?: (page: React.ReactNode) => React.ReactNode }).getLayout =
+  (page: React.ReactNode) => {
+    return <Layout title="Архивы - CloudDrive">{page}</Layout>;
+  };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const authProps = await checkAuth(ctx);
@@ -47,7 +46,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   try {
-    const items = await Api.files.getAll("photo");
+    const items = await Api.files.getAll();
 
     return {
       props: {
@@ -62,4 +61,4 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 };
 
-export default DashboardPhotos;
+export default DashboardArchives;

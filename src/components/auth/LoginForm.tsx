@@ -1,4 +1,4 @@
-import styles from "@/components/auth/Auth.module.scss";
+import styles from "@/components/Auth/Auth.module.scss";
 import { Button, Form, Input, notification } from "antd";
 import { LoginFormDTO } from "@/api/dto/auth.dto";
 

@@ -1,14 +1,23 @@
-import { Avatar, Button, Layout, Menu, Popover } from "antd";
-import React from "react";
+import { Avatar, Button, Input, Layout, Menu, Popover, Space } from "antd";
+import React, { useState } from "react";
 import * as Api from "@/api";
-import { CloudOutlined } from "@ant-design/icons";
+import {
+  CloudOutlined,
+  SearchOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  BellOutlined,
+} from "@ant-design/icons";
 
 import styles from "./Header.module.scss";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export const Header: React.FC = () => {
   const router = useRouter();
   const selectedMenu = router.pathname;
+  const [searchValue, setSearchValue] = useState("");
 
   const onClickLogout = () => {
     if (window.confirm("Вы действительно хотите выйти?")) {
@@ -16,46 +25,58 @@ export const Header: React.FC = () => {
       location.href = "/";
     }
   };
+
+  const onSearch = (value: string) => {
+    // TODO: Implement search functionality
+    console.log("Search:", value);
+  };
+
   return (
     <Layout.Header className={styles.root}>
       <div className={styles.headerInner}>
         <div className={styles.headerLeft}>
-          <h2>
-            <CloudOutlined />
-            CloudStorage
-          </h2>
-
-          <Menu
-            className={styles.topMenu}
-            defaultSelectedKeys={[selectedMenu]}
-            onSelect={({ key }) => {
-              router.push(key);
-            }}
-            theme="dark"
-            mode="horizontal"
-            items={[
-              { key: "/dashboard", label: "Главная" },
-              {
-                key: "/dashboard/profile",
-                label: "Профиль",
-              },
-            ]}
-          />
+          <Link href={"/dashboard"}>
+            <div className={styles.logo}>
+              <CloudOutlined className={styles.logoIcon} />
+              <span className={styles.logoText}>CloudDrive</span>
+            </div>
+          </Link>
         </div>
 
         <div className={styles.headerRight}>
-          <Popover
-            trigger="click"
-            content={
-              <Button
-                onClick={onClickLogout}
-                type="primary"
-                danger>
-                Выйти
-              </Button>
-            }>
-            <Avatar>A</Avatar>
-          </Popover>
+          <Space size="middle">
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              content={
+                <div className={styles.userMenu}>
+                  <Button
+                    type="text"
+                    icon={<UserOutlined />}
+                    block
+                    className={styles.menuItem}
+                    onClick={() => router.push("/dashboard/profile")}>
+                    Профиль
+                  </Button>
+
+                  <div className={styles.menuDivider} />
+                  <Button
+                    type="text"
+                    icon={<LogoutOutlined />}
+                    danger
+                    block
+                    className={styles.menuItem}
+                    onClick={onClickLogout}>
+                    Выйти
+                  </Button>
+                </div>
+              }>
+              <Avatar
+                className={styles.avatar}
+                icon={<UserOutlined />}
+              />
+            </Popover>
+          </Space>
         </div>
       </div>
     </Layout.Header>

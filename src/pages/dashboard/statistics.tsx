@@ -1,43 +1,38 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React, { JSX } from "react";
+import React from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
 import { FileItem } from "@/api/dto/files.dto";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { Files } from "@/modules/Files";
+import { Statistics } from "@/components/Statistics";
 import styles from "@/styles/Home.module.scss";
 
 interface Props {
   items: FileItem[];
 }
 
-const DashboardPhotos: NextPage<Props> = ({ items }) => {
+const DashboardStatistics: NextPage<Props> = ({ items }) => {
   return (
     <DashboardLayout>
       <div className={styles.pageContent}>
         <div className={styles.pageHeader}>
-          <h1>Фото</h1>
+          <h1>Статистика</h1>
           <p className={styles.pageDescription}>
-            Все ваши изображения
+            Аналитика ваших файлов и хранилища
           </p>
         </div>
-        <Files
-          items={items}
-          withActions
-          defaultFilter="image"
-        />
+        <Statistics files={items} />
       </div>
     </DashboardLayout>
   );
 };
 
-(
-  DashboardPhotos as NextPage<Props> & { getLayout?: (page: React.ReactNode) => JSX.Element }
-).getLayout = (page: React.ReactNode) => {
-  return <Layout title="Фото - CloudDrive">{page}</Layout>;
-};
+(DashboardStatistics as NextPage<Props> & { getLayout?: (page: React.ReactNode) => React.ReactNode }).getLayout =
+  (page: React.ReactNode) => {
+    return <Layout title="Статистика - CloudDrive">{page}</Layout>;
+  };
 
 export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const authProps = await checkAuth(ctx);
@@ -47,7 +42,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   try {
-    const items = await Api.files.getAll("photo");
+    const items = await Api.files.getAll();
 
     return {
       props: {
@@ -62,4 +57,4 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 };
 
-export default DashboardPhotos;
+export default DashboardStatistics;
