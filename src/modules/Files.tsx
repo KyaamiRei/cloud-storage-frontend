@@ -49,7 +49,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
       const removedCount = selectedIds.length;
       setSelectedIds([]);
       toast.success(`Удалено файлов: ${removedCount}`);
-      
+
       // Обновляем список файлов
       try {
         const updatedFiles = await Api.files.getAll();
@@ -67,7 +67,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     if (selectedIds.length === 0) return;
 
     const selectedFiles = files.filter((file) => selectedIds.includes(file.id));
-    
+
     if (selectedFiles.length === 0) {
       toast.error("Файлы не найдены");
       return;
@@ -94,7 +94,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     if (selectedIds.length === 0) return;
 
     const selectedFiles = files.filter((file) => selectedIds.includes(file.id));
-    
+
     if (selectedFiles.length === 0) {
       toast.error("Файлы не найдены");
       return;
@@ -104,7 +104,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     const fileIds = selectedFiles.map((f) => f.id).join(",");
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
     const link = `${baseUrl}/share?files=${fileIds}`;
-    
+
     setShareLink(link);
     setShareModalVisible(true);
   };
@@ -136,7 +136,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     // Фильтрация по поисковому запросу
     if (searchQuery) {
       result = result.filter((file) => {
-        const fileName = (file.originalName || "").toLowerCase();
+        const fileName = (file.filename || "").toLowerCase();
         return fileName.includes(searchQuery.toLowerCase());
       });
     }
@@ -145,8 +145,8 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     result.sort((a, b) => {
       switch (sortType) {
         case "name":
-          const nameA = (a.originalName || "").trim();
-          const nameB = (b.originalName || "").trim();
+          const nameA = (a.filename || "").trim();
+          const nameB = (b.filename || "").trim();
           if (!nameA && !nameB) return 0;
           if (!nameA) return 1;
           if (!nameB) return -1;
@@ -192,7 +192,7 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
           isDownloading={isDownloading}
         />
       )}
-      
+
       {sortedAndFilteredFiles.length ? (
         <FileList
           items={sortedAndFilteredFiles}

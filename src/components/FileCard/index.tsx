@@ -83,7 +83,7 @@ export const FileCard: React.FC<FileCardProps> = ({ originalName, filename, size
                 className={styles.image}
                 loader={() => imageUrl}
                 src={imageUrl}
-                alt={originalName}
+                alt={filename}
                 fill
                 unoptimized
                 sizes="(max-width: 768px) 160px, 180px"
@@ -102,8 +102,8 @@ export const FileCard: React.FC<FileCardProps> = ({ originalName, filename, size
         <div className={styles.fileInfo}>
           <div
             className={styles.fileName}
-            title={originalName}>
-            {originalName}
+            title={filename}>
+            {filename}
           </div>
           {size !== undefined && <div className={styles.fileSize}>{formatFileSize(size)}</div>}
         </div>
