@@ -321,7 +321,7 @@ export const Files: React.FC<FilesProps> = ({
           onDownload={onClickDownload}
           onDelete={disableDelete ? undefined : (externalOnDelete || onClickRemove)}
           onShare={onClickShare}
-          onRestore={externalOnRestore || onClickRestore}
+          onRestore={fileType === "trash" ? (externalOnRestore || onClickRestore) : undefined}
           hideDownload={hideDownload}
           hideShare={hideShare}
           onSort={onSort}
