@@ -1,28 +1,48 @@
 import { CloudUploadOutlined } from "@ant-design/icons";
 import { Button, Upload, UploadFile } from "antd";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import styles from "./UploadButton.module.scss";
 import * as Api from "@/api";
+import { useFilesStore } from "@/store/filesStore";
 import toast from "react-hot-toast";
+import { logger } from "@/utils/logger";
 
 export const UploadButton: React.FC = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const { setFiles } = useFilesStore();
 
-  const onUploadSuccess = async (options: any) => {
-    setIsUploading(true);
+  const refreshFiles = useCallback(async () => {
     try {
-      await Api.files.uploadFile(options);
-      setFileList([]);
-      toast.success("Файл успешно загружен");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      const updatedFiles = await Api.files.getAll();
+      setFiles(updatedFiles);
     } catch (error) {
-      toast.error("Не удалось загрузить файл");
-      setIsUploading(false);
+      logger.error("Failed to refresh files after upload:", error);
+      // Не показываем ошибку пользователю, т.к. файл уже загружен
     }
-  };
+  }, [setFiles]);
+
+  const onUploadSuccess = useCallback(
+    async (options: any) => {
+      setIsUploading(true);
+      try {
+        await Api.files.uploadFile(options);
+        setFileList([]);
+        toast.success("Файл успешно загружен");
+
+        // Обновляем список файлов через store вместо перезагрузки страницы
+        await refreshFiles();
+      } catch (error: any) {
+        logger.error("Upload error:", error);
+        const errorMessage =
+          error.response?.data?.message || "Не удалось загрузить файл";
+        toast.error(errorMessage);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [refreshFiles]
+  );
 
   return (
     <div className={styles.uploadWrapper}>

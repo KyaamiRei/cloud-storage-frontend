@@ -1,6 +1,7 @@
 import { Avatar, Button, Input, Layout, Menu, Popover, Space } from "antd";
 import React, { useState } from "react";
 import * as Api from "@/api";
+import { logger } from "@/utils/logger";
 import {
   CloudOutlined,
   SearchOutlined,
@@ -18,17 +19,24 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const selectedMenu = router.pathname;
   const [searchValue, setSearchValue] = useState("");
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   const onClickLogout = () => {
+    setPopoverVisible(false);
     if (window.confirm("Вы действительно хотите выйти?")) {
       Api.auth.logout();
       location.href = "/";
     }
   };
 
+  const handleProfileClick = () => {
+    setPopoverVisible(false);
+    router.push("/dashboard/profile");
+  };
+
   const onSearch = (value: string) => {
     // TODO: Implement search functionality
-    console.log("Search:", value);
+    logger.log("Search:", value);
   };
 
   return (
@@ -48,6 +56,9 @@ export const Header: React.FC = () => {
             <Popover
               trigger="click"
               placement="bottomRight"
+              open={popoverVisible}
+              onOpenChange={setPopoverVisible}
+              overlayClassName={styles.popoverOverlay}
               content={
                 <div className={styles.userMenu}>
                   <Button
@@ -55,7 +66,7 @@ export const Header: React.FC = () => {
                     icon={<UserOutlined />}
                     block
                     className={styles.menuItem}
-                    onClick={() => router.push("/dashboard/profile")}>
+                    onClick={handleProfileClick}>
                     Профиль
                   </Button>
 
@@ -74,6 +85,7 @@ export const Header: React.FC = () => {
               <Avatar
                 className={styles.avatar}
                 icon={<UserOutlined />}
+                style={{ cursor: "pointer" }}
               />
             </Popover>
           </Space>

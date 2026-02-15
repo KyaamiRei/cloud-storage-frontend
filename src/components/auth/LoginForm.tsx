@@ -5,6 +5,7 @@ import { LoginFormDTO } from "@/api/dto/auth.dto";
 import * as Api from "@/api";
 import { setCookie } from "nookies";
 import { NotProps } from "@/api/dto/notification.dto";
+import { logger } from "@/utils/logger";
 
 export const LoginForm = () => {
   const [api, contextHolder] = notification.useNotification();
@@ -31,13 +32,16 @@ export const LoginForm = () => {
       });
 
       location.href = "/dashboard";
-    } catch (err) {
-      console.warn("LoginForm", err);
+    } catch (err: any) {
+      logger.error("LoginForm error:", err);
+
+      const errorMessage =
+        err.response?.data?.message || "Неверный логин или пароль";
 
       openNotificationWithIcon({
         type: "error",
         message: "Ошибка",
-        description: "Неверный логин или пороль",
+        description: errorMessage,
       });
     }
   };

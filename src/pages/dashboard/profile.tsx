@@ -73,7 +73,7 @@ const DashboardProfilePage: NextPage<Props> = ({ userData: initialUserData }) =>
       setIsEditing(false);
       toast.success("Профиль успешно обновлен");
     } catch (error: any) {
-      console.error("Failed to update profile:", error);
+      logger.error("Failed to update profile:", error);
       const errorMessage = error.response?.data?.message || error.message || "Не удалось обновить профиль";
       toast.error(errorMessage);
     } finally {
@@ -96,7 +96,7 @@ const DashboardProfilePage: NextPage<Props> = ({ userData: initialUserData }) =>
       setIsChangingPassword(false);
       toast.success("Пароль успешно изменен");
     } catch (error: any) {
-      console.error("Failed to change password:", error);
+      logger.error("Failed to change password:", error);
       toast.error(error.response?.data?.message || "Не удалось изменить пароль");
     } finally {
       setLoading(false);

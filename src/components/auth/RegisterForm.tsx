@@ -5,6 +5,7 @@ import { setCookie } from "nookies";
 import React from "react";
 
 import * as Api from "@/api";
+import { logger } from "@/utils/logger";
 
 import styles from "@/components/Auth/Auth.module.scss";
 
@@ -33,13 +34,16 @@ export const RegisterForm = () => {
       });
 
       location.href = "/dashboard";
-    } catch (err) {
-      console.warn(err);
+    } catch (err: any) {
+      logger.error("RegisterForm error:", err);
+
+      const errorMessage =
+        err.response?.data?.message || "Не удалось зарегистрироваться";
 
       openNotificationWithIcon({
         type: "error",
         message: "Ошибка",
-        description: "Неверный логин или пороль",
+        description: errorMessage,
       });
     }
   };

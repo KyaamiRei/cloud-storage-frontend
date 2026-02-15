@@ -48,7 +48,7 @@ const DashboardFavorites: NextPage<Props> = ({ items }) => {
       }
       toast.success(updatedFile.isFavorite ? "Добавлено в избранное" : "Удалено из избранного");
     } catch (error) {
-      console.error("Failed to toggle favorite:", error);
+      logger.error("Failed to toggle favorite:", error);
       toast.error("Не удалось изменить статус избранного");
     }
   };
@@ -91,7 +91,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
   } catch (err) {
-    console.log(err);
+    logger.error("Failed to fetch favorites:", err);
     return {
       props: { items: [] },
     };

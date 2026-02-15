@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { FileCategory, getFileCategory } from "@/utils/getFileType";
 import { useFilesStore } from "@/store/filesStore";
 import { useUIStore } from "@/store/uiStore";
+import { logger } from "@/utils/logger";
 
 import * as Api from "@/api";
 
@@ -209,10 +210,10 @@ export const Files: React.FC<FilesProps> = ({
           setLocalFiles(updatedFiles);
         }
       } catch (error) {
-        console.error("Failed to refresh files:", error);
+        logger.error("Failed to refresh files:", error);
       }
     } catch (error) {
-      console.error("Failed to remove files:", error);
+      logger.error("Failed to remove files:", error);
       toast.error("Не удалось удалить файлы");
     }
   };
@@ -237,7 +238,7 @@ export const Files: React.FC<FilesProps> = ({
         toast.success(`Скачано файлов: ${selectedFiles.length}`);
       }
     } catch (error) {
-      console.error("Download error:", error);
+      logger.error("Download error:", error);
       toast.error("Не удалось скачать файлы");
     } finally {
       setIsDownloading(false);
@@ -307,7 +308,7 @@ export const Files: React.FC<FilesProps> = ({
         }
         toast.success(updatedFile.isFavorite ? "Добавлено в избранное" : "Удалено из избранного");
       } catch (error: any) {
-        console.error("Failed to toggle favorite:", error);
+        logger.error("Failed to toggle favorite:", error);
         const errorMessage = error.response?.data?.message || error.message || "Не удалось изменить статус избранного";
         toast.error(errorMessage);
       }
@@ -351,10 +352,10 @@ export const Files: React.FC<FilesProps> = ({
             setLocalFiles(updatedFiles);
           }
         } catch (error) {
-          console.error("Failed to refresh files:", error);
+          logger.error("Failed to refresh files:", error);
         }
       } catch (error: any) {
-        console.error("Failed to restore files:", error);
+        logger.error("Failed to restore files:", error);
         toast.error(error.response?.data?.message || "Не удалось восстановить файлы");
       }
     }

@@ -1,5 +1,6 @@
 import axios from "@/core/axios";
 import { FileItem } from "./dto/files.dto";
+import { logger } from "@/utils/logger";
 
 type FileType = "all" | "photo" | "trash" | "favorites";
 
@@ -43,7 +44,7 @@ export const downloadFile = async (filename: string, originalName: string): Prom
     } catch (firstError: any) {
       // Если не получилось, пробуем альтернативный endpoint
       if (firstError.response?.status === 404) {
-        console.log("Trying alternative download endpoint...");
+        logger.log("Trying alternative download endpoint...");
         downloadUrl = `/uploads/${encodeURIComponent(filename)}`;
         response = await axios.get(downloadUrl, {
           responseType: "blob",
@@ -78,9 +79,9 @@ export const downloadFile = async (filename: string, originalName: string): Prom
       window.URL.revokeObjectURL(url);
     }, 100);
   } catch (error: any) {
-    console.error("Download error:", error);
-    console.error("Filename:", filename);
-    console.error("Original name:", originalName);
+    logger.error("Download error:", error);
+    logger.error("Filename:", filename);
+    logger.error("Original name:", originalName);
     
     let errorMessage = "Не удалось скачать файл";
     
@@ -114,7 +115,7 @@ export const downloadFiles = async (files: FileItem[]): Promise<void> => {
       // Небольшая задержка между скачиваниями
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.error(`Failed to download ${file.originalName}:`, error);
+      logger.error(`Failed to download ${file.originalName}:`, error);
       throw error;
     }
   }

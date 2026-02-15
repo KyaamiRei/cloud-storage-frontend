@@ -63,7 +63,7 @@ const formatFileSize = (bytes?: number): string => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export const FileCard: React.FC<FileCardProps> = ({ 
+export const FileCard: React.FC<FileCardProps> = React.memo(({ 
   originalName, 
   filename, 
   size, 
@@ -74,7 +74,10 @@ export const FileCard: React.FC<FileCardProps> = ({
   isInTrash = false,
 }) => {
   const ext = getExtensionFromFileName(filename);
-  const imageUrl = ext && isImage(ext) ? `http://localhost:3001/uploads/${filename}` : null;
+  const imageUrl = React.useMemo(
+    () => (ext && isImage(ext) ? `http://localhost:3001/uploads/${filename}` : null),
+    [ext, filename]
+  );
 
   const color = getColorByExtension(ext) || "default";
   const classColor = styles[color as keyof typeof styles] || "";
@@ -139,4 +142,6 @@ export const FileCard: React.FC<FileCardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+FileCard.displayName = "FileCard";

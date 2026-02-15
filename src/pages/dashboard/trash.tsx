@@ -11,6 +11,7 @@ import { FileSelectType } from "@/components/FileList";
 import { useFilesStore } from "@/store/filesStore";
 import { useUIStore } from "@/store/uiStore";
 import toast from "react-hot-toast";
+import { logger } from "@/utils/logger";
 
 interface Props {
   items: FileItem[];
@@ -34,27 +35,27 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
     if (selectedFileIds.length === 0) return;
 
     const idsToRemove = [...selectedFileIds];
-    console.log("Removing files with IDs:", idsToRemove);
+    logger.log("Removing files with IDs:", idsToRemove);
 
     try {
       await Api.files.removePermanently(idsToRemove);
-      console.log("Files removed permanently");
+      logger.log("Files removed permanently");
       
       // Обновляем список файлов с сервера
       try {
         const updatedFiles = await Api.files.getAll("trash");
-        console.log("Updated files from server:", updatedFiles.length);
+        logger.log("Updated files from server:", updatedFiles.length);
         setFiles(updatedFiles);
       } catch (error) {
-        console.error("Failed to refresh files:", error);
+        logger.error("Failed to refresh files:", error);
       }
       
       const removedCount = idsToRemove.length;
       deselectAll();
       toast.success(`Удалено файлов: ${removedCount}`);
     } catch (error: any) {
-      console.error("Failed to remove files:", error);
-      console.error("Error details:", error.response?.data || error.message);
+      logger.error("Failed to remove files:", error);
+      logger.error("Error details:", error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Не удалось удалить файлы");
     }
   };
@@ -63,27 +64,27 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
     if (selectedFileIds.length === 0) return;
 
     const idsToRestore = [...selectedFileIds];
-    console.log("Restoring files with IDs:", idsToRestore);
+    logger.log("Restoring files with IDs:", idsToRestore);
 
     try {
       await Api.files.restore(idsToRestore);
-      console.log("Files restored");
+      logger.log("Files restored");
       
       // Обновляем список файлов с сервера
       try {
         const updatedFiles = await Api.files.getAll("trash");
-        console.log("Updated files from server:", updatedFiles.length);
+        logger.log("Updated files from server:", updatedFiles.length);
         setFiles(updatedFiles);
       } catch (error) {
-        console.error("Failed to refresh files:", error);
+        logger.error("Failed to refresh files:", error);
       }
       
       const restoredCount = idsToRestore.length;
       deselectAll();
       toast.success(`Восстановлено файлов: ${restoredCount}`);
     } catch (error: any) {
-      console.error("Failed to restore files:", error);
-      console.error("Error details:", error.response?.data || error.message);
+      logger.error("Failed to restore files:", error);
+      logger.error("Error details:", error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Не удалось восстановить файлы");
     }
   };
@@ -140,7 +141,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
   } catch (err) {
-    console.log(err);
+    logger.error("Failed to fetch trash files:", err);
     return {
       props: { items: [] },
     };

@@ -65,7 +65,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
   } catch (err) {
-    console.log(err);
+    logger.error("Failed to fetch videos:", err);
     return {
       props: { items: [] },
     };

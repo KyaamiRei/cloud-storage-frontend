@@ -31,7 +31,7 @@ const DashboardStatistics: NextPage<Props> = ({ items, trashItems = [], favorite
         setTrashFiles(trash);
         setFavoriteFiles(favorites);
       } catch (error) {
-        console.error("Failed to load additional statistics:", error);
+        logger.error("Failed to load additional statistics:", error);
       }
     };
     loadAdditionalData();
@@ -83,7 +83,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
   } catch (err) {
-    console.log(err);
+    logger.error("Failed to fetch statistics:", err);
     return {
       props: { 
         items: [],

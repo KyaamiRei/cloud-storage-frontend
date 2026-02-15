@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 
 import * as Api from "@/api";
 import { useFilesStore } from "@/store/filesStore";
+import { logger } from "@/utils/logger";
 
 import { Layout } from "@/layouts/Layout";
 import { FileItem } from "@/api/dto/files.dto";
@@ -66,7 +67,7 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
       },
     };
   } catch (err) {
-    console.log(err);
+    logger.error("Failed to fetch files:", err);
     return {
       props: { items: [] },
     };
