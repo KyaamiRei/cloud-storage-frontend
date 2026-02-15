@@ -1,6 +1,6 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React from "react";
+import React, { useEffect } from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
@@ -8,6 +8,8 @@ import { FileItem } from "@/api/dto/files.dto";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Files } from "@/modules/Files";
 import { FileSelectType } from "@/components/FileList";
+import { useFilesStore } from "@/store/filesStore";
+import { useUIStore } from "@/store/uiStore";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -15,33 +17,34 @@ interface Props {
 }
 
 const DashboardFavorites: NextPage<Props> = ({ items }) => {
-  const [files, setFiles] = React.useState(items || []);
-  const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
+  const { setFiles, getFilesByType, updateFile } = useFilesStore();
+  const { selectedFileIds, selectFile, deselectFile, deselectAll } = useUIStore();
 
   // Обновляем файлы при изменении items
-  React.useEffect(() => {
-    setFiles(items || []);
-  }, [items]);
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setFiles(items);
+    }
+  }, [items, setFiles]);
+
+  const files = getFilesByType("favorites");
 
   const handleFileSelect = (id: number, type: FileSelectType) => {
     if (type === "select") {
-      setSelectedIds((prev) => [...prev, id]);
+      selectFile(id);
     } else {
-      setSelectedIds((prev) => prev.filter((_id) => _id !== id));
+      deselectFile(id);
     }
   };
 
   const handleToggleFavorite = async (id: number) => {
     try {
       const updatedFile = await Api.files.toggleFavorite(id);
-      // Обновляем файл в списке
-      setFiles((prev) =>
-        prev.map((file) => (file.id === id ? { ...file, isFavorite: updatedFile.isFavorite } : file))
-      );
-      // Если файл убран из избранного, удаляем его из списка
+      // Обновляем файл в store
+      updateFile(id, { isFavorite: updatedFile.isFavorite });
+      // Если файл убран из избранного, снимаем выделение
       if (!updatedFile.isFavorite) {
-        setFiles((prev) => prev.filter((file) => file.id !== id));
-        setSelectedIds((prev) => prev.filter((_id) => _id !== id));
+        deselectFile(id);
       }
       toast.success(updatedFile.isFavorite ? "Добавлено в избранное" : "Удалено из избранного");
     } catch (error) {
@@ -56,7 +59,7 @@ const DashboardFavorites: NextPage<Props> = ({ items }) => {
         items={files}
         withActions
         onFileSelect={handleFileSelect}
-        selectedIds={selectedIds}
+        selectedIds={selectedFileIds}
         fileType="favorites"
         onToggleFavorite={handleToggleFavorite}
       />

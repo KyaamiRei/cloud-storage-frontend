@@ -1,6 +1,6 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React from "react";
+import React, { useEffect } from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
@@ -8,6 +8,8 @@ import { FileItem } from "@/api/dto/files.dto";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Files } from "@/modules/Files";
 import { FileSelectType } from "@/components/FileList";
+import { useFilesStore } from "@/store/filesStore";
+import { useUIStore } from "@/store/uiStore";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -16,37 +18,39 @@ interface Props {
 }
 
 const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
-  const [files, setFiles] = React.useState(items || []);
-  const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
+  const { setFiles, getFilesByType } = useFilesStore();
+  const { selectedFileIds, selectFile, deselectFile, deselectAll } = useUIStore();
 
   // Обновляем файлы при изменении items
-  React.useEffect(() => {
-    setFiles(items || []);
-  }, [items]);
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setFiles(items);
+    }
+  }, [items, setFiles]);
+
+  const files = getFilesByType("trash");
 
   const onClickRemove = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedFileIds.length === 0) return;
 
-    const idsToRemove = [...selectedIds];
+    const idsToRemove = [...selectedFileIds];
     console.log("Removing files with IDs:", idsToRemove);
 
     try {
       await Api.files.removePermanently(idsToRemove);
       console.log("Files removed permanently");
       
-      // Сначала обновляем список файлов с сервера
+      // Обновляем список файлов с сервера
       try {
         const updatedFiles = await Api.files.getAll("trash");
         console.log("Updated files from server:", updatedFiles.length);
         setFiles(updatedFiles);
       } catch (error) {
         console.error("Failed to refresh files:", error);
-        // Если не удалось обновить с сервера, обновляем локально
-        setFiles((prev) => prev.filter((file) => !idsToRemove.includes(file.id)));
       }
       
       const removedCount = idsToRemove.length;
-      setSelectedIds([]);
+      deselectAll();
       toast.success(`Удалено файлов: ${removedCount}`);
     } catch (error: any) {
       console.error("Failed to remove files:", error);
@@ -56,9 +60,9 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
   };
 
   const onClickRestore = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedFileIds.length === 0) return;
 
-    const idsToRestore = [...selectedIds];
+    const idsToRestore = [...selectedFileIds];
     console.log("Restoring files with IDs:", idsToRestore);
 
     try {
@@ -72,12 +76,10 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
         setFiles(updatedFiles);
       } catch (error) {
         console.error("Failed to refresh files:", error);
-        // Если не удалось обновить с сервера, обновляем локально
-        setFiles((prev) => prev.filter((file) => !idsToRestore.includes(file.id)));
       }
       
       const restoredCount = idsToRestore.length;
-      setSelectedIds([]);
+      deselectAll();
       toast.success(`Восстановлено файлов: ${restoredCount}`);
     } catch (error: any) {
       console.error("Failed to restore files:", error);
@@ -88,9 +90,9 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
 
   const handleFileSelect = (id: number, type: FileSelectType) => {
     if (type === "select") {
-      setSelectedIds((prev) => [...prev, id]);
+      selectFile(id);
     } else {
-      setSelectedIds((prev) => prev.filter((_id) => _id !== id));
+      deselectFile(id);
     }
   };
 
@@ -100,7 +102,7 @@ const DashboardTrash: NextPage<Props> = ({ items, withActions }) => {
         items={files}
         withActions
         onFileSelect={handleFileSelect}
-        selectedIds={selectedIds}
+        selectedIds={selectedFileIds}
         fileType="trash"
         onDelete={onClickRemove}
         onRestore={onClickRestore}

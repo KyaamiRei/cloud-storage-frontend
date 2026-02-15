@@ -5,6 +5,8 @@ import { Empty, Modal, Input } from "antd";
 import { Toolbar, ViewMode } from "@/components/Toolbar";
 import toast from "react-hot-toast";
 import { FileCategory, getFileCategory } from "@/utils/getFileType";
+import { useFilesStore } from "@/store/filesStore";
+import { useUIStore } from "@/store/uiStore";
 
 import * as Api from "@/api";
 
@@ -45,30 +47,131 @@ export const Files: React.FC<FilesProps> = ({
   hideDownload = false,
   hideShare = false,
 }) => {
-  const [files, setFiles] = React.useState(items || []);
-  const [internalSelectedIds, setInternalSelectedIds] = React.useState<number[]>([]);
+  // Zustand stores
+  const { 
+    files: storeFiles, 
+    setFiles: setStoreFiles, 
+    removeFile: removeStoreFile,
+    updateFile: updateStoreFile,
+    toggleFileFavorite: toggleStoreFavorite,
+    getFilesByType,
+    getFileById
+  } = useFilesStore();
   
-  // Используем внешние selectedIds, если они переданы, иначе внутренние
-  const selectedIds = externalSelectedIds !== undefined ? externalSelectedIds : internalSelectedIds;
-  const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [sortType, setSortType] = React.useState<SortType>("name");
-  const [fileFilter, setFileFilter] = React.useState<FileCategory>(defaultFilter);
+  const {
+    selectedFileIds: storeSelectedIds,
+    selectFile: storeSelectFile,
+    deselectFile: storeDeselectFile,
+    selectAll: storeSelectAll,
+    deselectAll: storeDeselectAll,
+    viewMode: storeViewMode,
+    setViewMode: setStoreViewMode,
+    searchQuery: storeSearchQuery,
+    setSearchQuery: setStoreSearchQuery,
+    sortType: storeSortType,
+    setSortType: setStoreSortType,
+    fileFilter: storeFileFilter,
+    setFileFilter: setStoreFileFilter,
+  } = useUIStore();
+
+  // Локальное состояние для обратной совместимости (когда используются внешние пропсы)
+  const [localFiles, setLocalFiles] = React.useState<FileItem[]>(items || []);
+  const [internalSelectedIds, setInternalSelectedIds] = React.useState<number[]>([]);
+  const [localViewMode, setLocalViewMode] = React.useState<ViewMode>("grid");
+  const [localSearchQuery, setLocalSearchQuery] = React.useState("");
+  const [localSortType, setLocalSortType] = React.useState<SortType>("name");
+  const [localFileFilter, setLocalFileFilter] = React.useState<FileCategory>(defaultFilter);
+  
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [shareModalVisible, setShareModalVisible] = React.useState(false);
   const [shareLink, setShareLink] = React.useState("");
 
+  // Определяем, используем ли мы store или локальное состояние
+  const useStore = externalSelectedIds === undefined && !externalOnFileSelect;
+  
+  // Выбираем источник данных
+  // Приоритет: store (если используется и есть данные) > items > localFiles
+  const files = useStore 
+    ? (fileType === "all" 
+        ? (storeFiles.length > 0 ? storeFiles : (items || []))
+        : (() => {
+            // Для специфичных типов (photo, trash, favorites) используем getFilesByType
+            if (storeFiles.length > 0) {
+              const storeFiltered = getFilesByType(fileType);
+              // Если в store есть файлы нужного типа, используем их, иначе items
+              return storeFiltered.length > 0 ? storeFiltered : (items || []);
+            }
+            // Если store пустой, используем items (они уже отфильтрованы на сервере)
+            return items || [];
+          })())
+    : (localFiles.length > 0 ? localFiles : (items || []));
+  const selectedIds = externalSelectedIds !== undefined 
+    ? externalSelectedIds 
+    : useStore 
+      ? storeSelectedIds 
+      : internalSelectedIds;
+  const viewMode = useStore ? storeViewMode : localViewMode;
+  const searchQuery = useStore ? storeSearchQuery : localSearchQuery;
+  const sortType = useStore ? storeSortType : localSortType;
+  // Используем defaultFilter если fileFilter в store равен "all" (начальное значение)
+  // Это позволяет применять defaultFilter для страниц с фильтрами
+  const fileFilter = useStore 
+    ? (storeFileFilter === "all" && defaultFilter !== "all" ? defaultFilter : storeFileFilter)
+    : (localFileFilter === "all" && defaultFilter !== "all" ? defaultFilter : localFileFilter);
+
   // Обновляем файлы при изменении items
   React.useEffect(() => {
-    setFiles(items || []);
-  }, [items]);
+    if (!items) return;
+    
+    if (useStore) {
+      // Если используем store, обновляем его
+      // Объединяем существующие файлы с новыми, чтобы не потерять данные
+      const currentFiles = storeFiles;
+      
+      // Создаем Map для быстрого поиска существующих файлов
+      const filesMap = new Map(currentFiles.map((f: FileItem) => [f.id, f]));
+      // Обновляем или добавляем новые файлы
+      items.forEach(item => {
+        filesMap.set(item.id, item);
+      });
+      const newFiles = Array.from(filesMap.values());
+      
+      // Проверяем, действительно ли нужно обновлять (избегаем лишних обновлений)
+      // Сравниваем только по количеству и ID, чтобы избежать лишних обновлений
+      const currentIds = new Set(currentFiles.map(f => f.id));
+      const newIds = new Set(newFiles.map(f => f.id));
+      const hasChanges = currentIds.size !== newIds.size || 
+        Array.from(newIds).some(id => !currentIds.has(id)) ||
+        items.some(item => {
+          const existing = currentFiles.find(f => f.id === item.id);
+          return !existing || 
+            existing.isFavorite !== item.isFavorite ||
+            existing.deletedAt !== item.deletedAt;
+        });
+      
+      if (hasChanges) {
+        setStoreFiles(newFiles);
+      }
+    } else {
+      // Иначе используем локальное состояние
+      setLocalFiles(items);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, useStore, setStoreFiles]);
 
   const onFileSelect = (id: number, type: FileSelectType) => {
     if (externalOnFileSelect) {
       // Если передан внешний обработчик, используем его
       externalOnFileSelect(id, type);
+    } else if (useStore) {
+      // Используем store
+      if (type === "select") {
+        storeSelectFile(id);
+      } else {
+        storeDeselectFile(id);
+      }
     } else {
-      // Иначе используем внутреннее состояние
+      // Иначе используем локальное состояние
       if (type === "select") {
         setInternalSelectedIds((prev) => [...prev, id]);
       } else {
@@ -82,17 +185,29 @@ export const Files: React.FC<FilesProps> = ({
 
     try {
       await Api.files.remove(selectedIds);
-      setFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
-      const removedCount = selectedIds.length;
-      if (externalSelectedIds === undefined) {
-        setInternalSelectedIds([]);
+      
+      // Обновляем состояние
+      if (useStore) {
+        selectedIds.forEach((id) => removeStoreFile(id));
+        storeDeselectAll();
+      } else {
+        setLocalFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
+        if (externalSelectedIds === undefined) {
+          setInternalSelectedIds([]);
+        }
       }
+      
+      const removedCount = selectedIds.length;
       toast.success(`Удалено файлов: ${removedCount}`);
 
       // Обновляем список файлов с правильным типом
       try {
         const updatedFiles = await Api.files.getAll(fileType);
-        setFiles(updatedFiles);
+        if (useStore) {
+          setStoreFiles(updatedFiles);
+        } else {
+          setLocalFiles(updatedFiles);
+        }
       } catch (error) {
         console.error("Failed to refresh files:", error);
       }
@@ -154,26 +269,47 @@ export const Files: React.FC<FilesProps> = ({
   };
 
   const onSearch = (value: string) => {
-    setSearchQuery(value);
+    if (useStore) {
+      setStoreSearchQuery(value);
+    } else {
+      setLocalSearchQuery(value);
+    }
   };
 
   const onSort = (type: SortType) => {
-    setSortType(type);
+    if (useStore) {
+      setStoreSortType(type);
+    } else {
+      setLocalSortType(type);
+    }
   };
 
   const handleToggleFavorite = async (id: number) => {
+    // Проверяем, не находится ли файл в корзине
+    const file = files.find(f => f.id === id);
+    if (file?.deletedAt) {
+      toast.error("Нельзя добавить файл из корзины в избранное");
+      return;
+    }
+
     if (externalOnToggleFavorite) {
       externalOnToggleFavorite(id);
     } else {
       try {
         const updatedFile = await Api.files.toggleFavorite(id);
         // Обновляем файл в списке
-        setFiles((prev) =>
-          prev.map((file) => (file.id === id ? { ...file, isFavorite: updatedFile.isFavorite } : file))
-        );
-      } catch (error) {
+        if (useStore) {
+          updateStoreFile(id, { isFavorite: updatedFile.isFavorite });
+        } else {
+          setLocalFiles((prev) =>
+            prev.map((file) => (file.id === id ? { ...file, isFavorite: updatedFile.isFavorite } : file))
+          );
+        }
+        toast.success(updatedFile.isFavorite ? "Добавлено в избранное" : "Удалено из избранного");
+      } catch (error: any) {
         console.error("Failed to toggle favorite:", error);
-        toast.error("Не удалось изменить статус избранного");
+        const errorMessage = error.response?.data?.message || error.message || "Не удалось изменить статус избранного";
+        toast.error(errorMessage);
       }
     }
   };
@@ -186,17 +322,34 @@ export const Files: React.FC<FilesProps> = ({
 
       try {
         await Api.files.restore(selectedIds);
-        setFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
-        const restoredCount = selectedIds.length;
-        if (externalSelectedIds === undefined) {
-          setInternalSelectedIds([]);
+        
+        // Обновляем состояние
+        if (useStore) {
+          selectedIds.forEach((id) => {
+            const file = getFileById(id);
+            if (file) {
+              updateStoreFile(id, { deletedAt: null });
+            }
+          });
+          storeDeselectAll();
+        } else {
+          setLocalFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
+          if (externalSelectedIds === undefined) {
+            setInternalSelectedIds([]);
+          }
         }
+        
+        const restoredCount = selectedIds.length;
         toast.success(`Восстановлено файлов: ${restoredCount}`);
 
         // Обновляем список файлов с правильным типом
         try {
           const updatedFiles = await Api.files.getAll(fileType);
-          setFiles(updatedFiles);
+          if (useStore) {
+            setStoreFiles(updatedFiles);
+          } else {
+            setLocalFiles(updatedFiles);
+          }
         } catch (error) {
           console.error("Failed to refresh files:", error);
         }
@@ -213,7 +366,8 @@ export const Files: React.FC<FilesProps> = ({
     // Фильтрация по типу файла
     if (fileFilter !== "all") {
       result = result.filter((file) => {
-        const category = getFileCategory(file.filename);
+        // Используем originalName для определения категории, так как filename может быть хешированным
+        const category = getFileCategory(file.originalName || file.filename);
         return category === fileFilter;
       });
     }
@@ -270,10 +424,12 @@ export const Files: React.FC<FilesProps> = ({
           externalOnFileSelect(id, "select");
         }
       });
+    } else if (useStore) {
+      storeSelectAll(allIds);
     } else {
       setInternalSelectedIds(allIds);
     }
-  }, [sortedAndFilteredFiles, selectedIds, externalOnFileSelect]);
+  }, [sortedAndFilteredFiles, selectedIds, externalOnFileSelect, useStore, storeSelectAll]);
 
   const handleDeselectAll = React.useCallback(() => {
     if (externalOnFileSelect) {
@@ -281,10 +437,12 @@ export const Files: React.FC<FilesProps> = ({
       selectedIds.forEach((id) => {
         externalOnFileSelect(id, "unselect");
       });
+    } else if (useStore) {
+      storeDeselectAll();
     } else {
       setInternalSelectedIds([]);
     }
-  }, [selectedIds, externalOnFileSelect]);
+  }, [selectedIds, externalOnFileSelect, useStore, storeDeselectAll]);
 
   // Обработка Ctrl+A для выделения всех и Escape для снятия выделения
   React.useEffect(() => {
@@ -312,7 +470,7 @@ export const Files: React.FC<FilesProps> = ({
       {withActions && (
         <Toolbar
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={useStore ? setStoreViewMode : setLocalViewMode}
           onSearch={onSearch}
           selectedCount={selectedIds.length}
           totalCount={sortedAndFilteredFiles.length}
@@ -325,7 +483,7 @@ export const Files: React.FC<FilesProps> = ({
           hideDownload={hideDownload}
           hideShare={hideShare}
           onSort={onSort}
-          onFilter={setFileFilter}
+          onFilter={useStore ? setStoreFileFilter : setLocalFileFilter}
           currentFilter={fileFilter}
           isDownloading={isDownloading}
           deleteTitle={deleteTitle}

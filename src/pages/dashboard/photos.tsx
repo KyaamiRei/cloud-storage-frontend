@@ -1,12 +1,13 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React, { JSX } from "react";
+import React, { JSX, useEffect } from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
 import { FileItem } from "@/api/dto/files.dto";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Files } from "@/modules/Files";
+import { useFilesStore } from "@/store/filesStore";
 import styles from "@/styles/Home.module.scss";
 
 interface Props {
@@ -14,6 +15,15 @@ interface Props {
 }
 
 const DashboardPhotos: NextPage<Props> = ({ items }) => {
+  const { setFiles } = useFilesStore();
+
+  // Инициализируем store при загрузке страницы
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setFiles(items);
+    }
+  }, [items, setFiles]);
+
   return (
     <DashboardLayout>
       <div className={styles.pageContent}>
@@ -26,6 +36,7 @@ const DashboardPhotos: NextPage<Props> = ({ items }) => {
         <Files
           items={items}
           withActions
+          fileType="photo"
           defaultFilter="image"
         />
       </div>

@@ -221,8 +221,9 @@ export const FileList: React.FC<FileListProps> = ({
             originalName={item.originalName}
             size={item.size}
             isFavorite={item.isFavorite || false}
-            onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(item.id) : undefined}
+            onToggleFavorite={onToggleFavorite && !item.deletedAt ? () => onToggleFavorite(item.id) : undefined}
             isSelected={selectedIds.includes(item.id)}
+            isInTrash={!!item.deletedAt}
             onClick={(e) => {
               // Предотвращаем всплытие и конфликт с Selecto
               e.stopPropagation();

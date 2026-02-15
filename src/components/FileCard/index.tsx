@@ -24,6 +24,7 @@ interface FileCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: (e: React.MouseEvent) => void;
   isSelected?: boolean; // Флаг выделения
+  isInTrash?: boolean; // Файл в корзине
 }
 
 const getFileIcon = (ext: string | undefined) => {
@@ -70,6 +71,7 @@ export const FileCard: React.FC<FileCardProps> = ({
   isFavorite = false,
   onToggleFavorite,
   isSelected = false,
+  isInTrash = false,
 }) => {
   const ext = getExtensionFromFileName(filename);
   const imageUrl = ext && isImage(ext) ? `http://localhost:3001/uploads/${filename}` : null;
@@ -110,7 +112,7 @@ export const FileCard: React.FC<FileCardProps> = ({
           {ext && (
             <div className={`${styles.extensionBadge} ${classColor}`}>{ext.toUpperCase()}</div>
           )}
-          {onToggleFavorite && (
+          {onToggleFavorite && !isInTrash && (
             <div 
               className={styles.favoriteButton}
               onClick={(e) => {
