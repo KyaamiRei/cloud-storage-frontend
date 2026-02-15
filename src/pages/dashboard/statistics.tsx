@@ -1,6 +1,6 @@
 import { GetServerSidePropsContext, NextPage } from "next";
 import { checkAuth } from "@/utils/checkAuth";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Layout } from "@/layouts/Layout";
 
 import * as Api from "@/api";
@@ -11,9 +11,32 @@ import styles from "@/styles/Home.module.scss";
 
 interface Props {
   items: FileItem[];
+  trashItems?: FileItem[];
+  favoriteItems?: FileItem[];
 }
 
-const DashboardStatistics: NextPage<Props> = ({ items }) => {
+const DashboardStatistics: NextPage<Props> = ({ items, trashItems = [], favoriteItems = [] }) => {
+  const [allFiles, setAllFiles] = useState(items);
+  const [trashFiles, setTrashFiles] = useState(trashItems);
+  const [favoriteFiles, setFavoriteFiles] = useState(favoriteItems);
+
+  useEffect(() => {
+    // Загружаем дополнительные данные на клиенте
+    const loadAdditionalData = async () => {
+      try {
+        const [trash, favorites] = await Promise.all([
+          Api.files.getAll("trash").catch(() => []),
+          Api.files.getAll("favorites").catch(() => []),
+        ]);
+        setTrashFiles(trash);
+        setFavoriteFiles(favorites);
+      } catch (error) {
+        console.error("Failed to load additional statistics:", error);
+      }
+    };
+    loadAdditionalData();
+  }, []);
+
   return (
     <DashboardLayout>
       <div className={styles.pageContent}>
@@ -23,7 +46,11 @@ const DashboardStatistics: NextPage<Props> = ({ items }) => {
             Аналитика ваших файлов и хранилища
           </p>
         </div>
-        <Statistics files={items} />
+        <Statistics 
+          files={allFiles} 
+          trashFiles={trashFiles}
+          favoriteFiles={favoriteFiles}
+        />
       </div>
     </DashboardLayout>
   );
@@ -42,17 +69,27 @@ export const getServerSideProps = async (ctx: GetServerSidePropsContext) => {
   }
 
   try {
-    const items = await Api.files.getAll();
+    const [items, trashItems, favoriteItems] = await Promise.all([
+      Api.files.getAll("all").catch(() => []),
+      Api.files.getAll("trash").catch(() => []),
+      Api.files.getAll("favorites").catch(() => []),
+    ]);
 
     return {
       props: {
-        items,
+        items: items || [],
+        trashItems: trashItems || [],
+        favoriteItems: favoriteItems || [],
       },
     };
   } catch (err) {
     console.log(err);
     return {
-      props: { items: [] },
+      props: { 
+        items: [],
+        trashItems: [],
+        favoriteItems: [],
+      },
     };
   }
 };

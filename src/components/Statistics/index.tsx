@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Row, Col, Statistic, Progress, Tag } from "antd";
+import { Card, Row, Col, Statistic, Progress, Tag, Empty } from "antd";
 import {
   FileOutlined,
   FileImageOutlined,
@@ -8,6 +8,9 @@ import {
   SoundOutlined,
   FileZipOutlined,
   DatabaseOutlined,
+  DeleteOutlined,
+  StarOutlined,
+  CloudOutlined,
 } from "@ant-design/icons";
 import { FileItem } from "@/api/dto/files.dto";
 import { getFileCategory, FileCategory, getFileCategoryLabel } from "@/utils/getFileType";
@@ -15,6 +18,8 @@ import styles from "./Statistics.module.scss";
 
 interface StatisticsProps {
   files: FileItem[];
+  trashFiles?: FileItem[];
+  favoriteFiles?: FileItem[];
 }
 
 interface CategoryStats {
@@ -48,10 +53,19 @@ const getCategoryIcon = (category: FileCategory) => {
   }
 };
 
-export const Statistics: React.FC<StatisticsProps> = ({ files }) => {
+export const Statistics: React.FC<StatisticsProps> = ({ 
+  files, 
+  trashFiles = [], 
+  favoriteFiles = [] 
+}) => {
+  // Фильтруем только активные файлы (не в корзине)
+  const activeFiles = files.filter((file) => !file.deletedAt);
+  
   // Подсчет общей статистики
-  const totalFiles = files.length;
-  const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
+  const totalFiles = activeFiles.length;
+  const totalSize = activeFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+  const trashSize = trashFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+  const favoriteSize = favoriteFiles.reduce((sum, file) => sum + (file.size || 0), 0);
   
   // Статистика по категориям
   const categoryStats = React.useMemo(() => {
@@ -65,14 +79,14 @@ export const Statistics: React.FC<StatisticsProps> = ({ files }) => {
       other: { category: "other", count: 0, size: 0 },
     };
 
-    files.forEach((file) => {
+    activeFiles.forEach((file) => {
       const category = getFileCategory(file.filename);
       stats[category].count++;
       stats[category].size += file.size || 0;
     });
 
     return Object.values(stats).filter((stat) => stat.count > 0);
-  }, [files]);
+  }, [activeFiles]);
 
   // Топ-5 категорий по размеру
   const topCategories = React.useMemo(() => {
@@ -230,29 +244,102 @@ export const Statistics: React.FC<StatisticsProps> = ({ files }) => {
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Самый большой файл:</span>
                 <span className={styles.infoValue}>
-                  {files.length > 0
-                    ? formatBytes(Math.max(...files.map((f) => f.size || 0)))
+                  {activeFiles.length > 0
+                    ? formatBytes(Math.max(...activeFiles.map((f) => f.size || 0)))
                     : "Нет файлов"}
                 </span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Самый маленький файл:</span>
                 <span className={styles.infoValue}>
-                  {files.length > 0
-                    ? formatBytes(Math.min(...files.map((f) => f.size || 0)))
+                  {activeFiles.length > 0
+                    ? formatBytes(Math.min(...activeFiles.map((f) => f.size || 0)))
                     : "Нет файлов"}
                 </span>
               </div>
               <div className={styles.infoItem}>
                 <span className={styles.infoLabel}>Файлов в корзине:</span>
                 <span className={styles.infoValue}>
-                  {files.filter((f) => f.deletedAt).length}
+                  {trashFiles.length} ({formatBytes(trashSize)})
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Избранных файлов:</span>
+                <span className={styles.infoValue}>
+                  {favoriteFiles.length} ({formatBytes(favoriteSize)})
                 </span>
               </div>
             </div>
           </Card>
         </Col>
       </Row>
+
+      {/* Дополнительные карточки статистики */}
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} lg={8}>
+          <Card className={styles.statCard}>
+            <div className={styles.statCardContent}>
+              <div className={styles.statCardIcon}>
+                <DeleteOutlined style={{ color: "#ff4d4f" }} />
+              </div>
+              <div className={styles.statCardInfo}>
+                <div className={styles.statCardValue}>{trashFiles.length}</div>
+                <div className={styles.statCardLabel}>Файлов в корзине</div>
+                <div className={styles.statCardSubtext}>
+                  {formatBytes(trashSize)}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={8}>
+          <Card className={styles.statCard}>
+            <div className={styles.statCardContent}>
+              <div className={styles.statCardIcon}>
+                <StarOutlined style={{ color: "#faad14" }} />
+              </div>
+              <div className={styles.statCardInfo}>
+                <div className={styles.statCardValue}>{favoriteFiles.length}</div>
+                <div className={styles.statCardLabel}>Избранных файлов</div>
+                <div className={styles.statCardSubtext}>
+                  {formatBytes(favoriteSize)}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={8}>
+          <Card className={styles.statCard}>
+            <div className={styles.statCardContent}>
+              <div className={styles.statCardIcon}>
+                <CloudOutlined style={{ color: "var(--primary-color)" }} />
+              </div>
+              <div className={styles.statCardInfo}>
+                <div className={styles.statCardValue}>
+                  {formatBytes(totalSize + trashSize)}
+                </div>
+                <div className={styles.statCardLabel}>Общий объем</div>
+                <div className={styles.statCardSubtext}>
+                  Включая корзину
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {totalFiles === 0 && (
+        <Row style={{ marginTop: 24 }}>
+          <Col xs={24}>
+            <Card>
+              <Empty
+                description="Нет файлов для отображения статистики"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };

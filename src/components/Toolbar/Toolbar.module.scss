@@ -55,10 +55,28 @@
 }
 
 .selectionText {
+  font-weight: 600;
+  color: var(--primary-color);
+  padding: 4px 12px;
+  background: var(--primary-light);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--primary-color);
   font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: selectionAppear 0.2s ease-out;
+}
+
+@keyframes selectionAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .actionButton {

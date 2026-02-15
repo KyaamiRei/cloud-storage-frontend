@@ -12,6 +12,8 @@ import {
   FileImageOutlined,
   FileZipOutlined,
   FileOutlined,
+  StarOutlined,
+  StarFilled,
 } from "@ant-design/icons";
 
 interface FileCardProps {
@@ -19,6 +21,9 @@ interface FileCardProps {
   originalName: string;
   size?: number;
   onClick?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
+  isSelected?: boolean; // Флаг выделения
 }
 
 const getFileIcon = (ext: string | undefined) => {
@@ -57,7 +62,15 @@ const formatFileSize = (bytes?: number): string => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
-export const FileCard: React.FC<FileCardProps> = ({ originalName, filename, size, onClick }) => {
+export const FileCard: React.FC<FileCardProps> = ({ 
+  originalName, 
+  filename, 
+  size, 
+  onClick,
+  isFavorite = false,
+  onToggleFavorite,
+  isSelected = false,
+}) => {
   const ext = getExtensionFromFileName(filename);
   const imageUrl = ext && isImage(ext) ? `http://localhost:3001/uploads/${filename}` : null;
 
@@ -66,7 +79,7 @@ export const FileCard: React.FC<FileCardProps> = ({ originalName, filename, size
 
   return (
     <div
-      className={styles.root}
+      className={`${styles.root} ${isSelected ? styles.active : ""}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -96,6 +109,20 @@ export const FileCard: React.FC<FileCardProps> = ({ originalName, filename, size
           )}
           {ext && (
             <div className={`${styles.extensionBadge} ${classColor}`}>{ext.toUpperCase()}</div>
+          )}
+          {onToggleFavorite && (
+            <div 
+              className={styles.favoriteButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(e);
+              }}>
+              {isFavorite ? (
+                <StarFilled className={styles.favoriteIcon} />
+              ) : (
+                <StarOutlined className={styles.favoriteIcon} />
+              )}
+            </div>
           )}
         </div>
 

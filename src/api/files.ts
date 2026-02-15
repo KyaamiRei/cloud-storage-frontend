@@ -1,14 +1,28 @@
 import axios from "@/core/axios";
 import { FileItem } from "./dto/files.dto";
 
-type FileType = "all" | "photo" | "trash";
+type FileType = "all" | "photo" | "trash" | "favorites";
 
 export const getAll = async (type: FileType = "all"): Promise<FileItem[]> => {
   return (await axios.get("/files?type=" + type)).data;
 };
 
 export const remove = (ids: number[]): Promise<void> => {
-  return axios.delete("/files?ids=" + ids);
+  if (ids.length === 0) {
+    return Promise.resolve();
+  }
+  // Формируем query string для массива ID
+  const idsParam = ids.join(",");
+  return axios.delete(`/files?ids=${idsParam}`);
+};
+
+export const removePermanently = (ids: number[]): Promise<void> => {
+  if (ids.length === 0) {
+    return Promise.resolve();
+  }
+  // Формируем query string для массива ID
+  const idsParam = ids.join(",");
+  return axios.delete(`/files/permanent?ids=${idsParam}`);
 };
 
 export const downloadFile = async (filename: string, originalName: string): Promise<void> => {
@@ -128,4 +142,23 @@ export const uploadFile = async (options: any) => {
   } catch (err) {
     onError({ err });
   }
+};
+
+export const toggleFavorite = async (id: number): Promise<FileItem> => {
+  const response = await axios.patch(`/files/${id}/favorite`);
+  return response.data;
+};
+
+export const getFavorites = async (): Promise<FileItem[]> => {
+  const response = await axios.get("/files/favorites");
+  return response.data;
+};
+
+export const restore = (ids: number[]): Promise<void> => {
+  if (ids.length === 0) {
+    return Promise.resolve();
+  }
+  // Формируем query string для массива ID
+  const idsParam = ids.join(",");
+  return axios.patch(`/files/restore?ids=${idsParam}`);
 };

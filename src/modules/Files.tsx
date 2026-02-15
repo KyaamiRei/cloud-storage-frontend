@@ -12,13 +12,44 @@ interface FilesProps {
   items: FileItem[];
   withActions?: boolean;
   defaultFilter?: FileCategory;
+  onFileSelect?: (id: number, type: FileSelectType) => void;
+  selectedIds?: number[];
+  fileType?: "all" | "photo" | "trash" | "favorites";
+  disableDelete?: boolean; // Отключает удаление через Toolbar
+  onDelete?: () => void; // Внешний обработчик удаления
+  deleteTitle?: string; // Кастомный заголовок для удаления
+  deleteDescription?: string; // Кастомное описание для удаления
+  deleteButtonText?: string; // Кастомный текст кнопки удаления
+  onToggleFavorite?: (id: number) => void; // Обработчик переключения избранного
+  onRestore?: () => void; // Обработчик восстановления файлов
+  hideDownload?: boolean; // Скрыть кнопку скачать
+  hideShare?: boolean; // Скрыть кнопку поделиться
 }
 
 type SortType = "name" | "date" | "size" | "type";
 
-export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter = "all" }) => {
+export const Files: React.FC<FilesProps> = ({ 
+  items, 
+  withActions, 
+  defaultFilter = "all",
+  onFileSelect: externalOnFileSelect,
+  selectedIds: externalSelectedIds,
+  fileType = "all",
+  disableDelete = false,
+  onDelete: externalOnDelete,
+  deleteTitle,
+  deleteDescription,
+  deleteButtonText,
+  onToggleFavorite: externalOnToggleFavorite,
+  onRestore: externalOnRestore,
+  hideDownload = false,
+  hideShare = false,
+}) => {
   const [files, setFiles] = React.useState(items || []);
-  const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
+  const [internalSelectedIds, setInternalSelectedIds] = React.useState<number[]>([]);
+  
+  // Используем внешние selectedIds, если они переданы, иначе внутренние
+  const selectedIds = externalSelectedIds !== undefined ? externalSelectedIds : internalSelectedIds;
   const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sortType, setSortType] = React.useState<SortType>("name");
@@ -33,10 +64,16 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
   }, [items]);
 
   const onFileSelect = (id: number, type: FileSelectType) => {
-    if (type === "select") {
-      setSelectedIds((prev) => [...prev, id]);
+    if (externalOnFileSelect) {
+      // Если передан внешний обработчик, используем его
+      externalOnFileSelect(id, type);
     } else {
-      setSelectedIds((prev) => prev.filter((_id) => _id !== id));
+      // Иначе используем внутреннее состояние
+      if (type === "select") {
+        setInternalSelectedIds((prev) => [...prev, id]);
+      } else {
+        setInternalSelectedIds((prev) => prev.filter((_id) => _id !== id));
+      }
     }
   };
 
@@ -47,12 +84,14 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
       await Api.files.remove(selectedIds);
       setFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
       const removedCount = selectedIds.length;
-      setSelectedIds([]);
+      if (externalSelectedIds === undefined) {
+        setInternalSelectedIds([]);
+      }
       toast.success(`Удалено файлов: ${removedCount}`);
 
-      // Обновляем список файлов
+      // Обновляем список файлов с правильным типом
       try {
-        const updatedFiles = await Api.files.getAll();
+        const updatedFiles = await Api.files.getAll(fileType);
         setFiles(updatedFiles);
       } catch (error) {
         console.error("Failed to refresh files:", error);
@@ -122,6 +161,52 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     setSortType(type);
   };
 
+  const handleToggleFavorite = async (id: number) => {
+    if (externalOnToggleFavorite) {
+      externalOnToggleFavorite(id);
+    } else {
+      try {
+        const updatedFile = await Api.files.toggleFavorite(id);
+        // Обновляем файл в списке
+        setFiles((prev) =>
+          prev.map((file) => (file.id === id ? { ...file, isFavorite: updatedFile.isFavorite } : file))
+        );
+      } catch (error) {
+        console.error("Failed to toggle favorite:", error);
+        toast.error("Не удалось изменить статус избранного");
+      }
+    }
+  };
+
+  const onClickRestore = async () => {
+    if (externalOnRestore) {
+      externalOnRestore();
+    } else {
+      if (selectedIds.length === 0) return;
+
+      try {
+        await Api.files.restore(selectedIds);
+        setFiles((prev) => prev.filter((file) => !selectedIds.includes(file.id)));
+        const restoredCount = selectedIds.length;
+        if (externalSelectedIds === undefined) {
+          setInternalSelectedIds([]);
+        }
+        toast.success(`Восстановлено файлов: ${restoredCount}`);
+
+        // Обновляем список файлов с правильным типом
+        try {
+          const updatedFiles = await Api.files.getAll(fileType);
+          setFiles(updatedFiles);
+        } catch (error) {
+          console.error("Failed to refresh files:", error);
+        }
+      } catch (error: any) {
+        console.error("Failed to restore files:", error);
+        toast.error(error.response?.data?.message || "Не удалось восстановить файлы");
+      }
+    }
+  };
+
   const sortedAndFilteredFiles = React.useMemo(() => {
     let result = [...files];
 
@@ -175,6 +260,53 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
     return result;
   }, [files, searchQuery, sortType, fileFilter]);
 
+  // Обработчики для выделения всех/снятия выделения
+  const handleSelectAll = React.useCallback(() => {
+    const allIds = sortedAndFilteredFiles.map((file) => file.id);
+    if (externalOnFileSelect) {
+      // Если есть внешний обработчик, вызываем его для каждого файла
+      allIds.forEach((id) => {
+        if (!selectedIds.includes(id)) {
+          externalOnFileSelect(id, "select");
+        }
+      });
+    } else {
+      setInternalSelectedIds(allIds);
+    }
+  }, [sortedAndFilteredFiles, selectedIds, externalOnFileSelect]);
+
+  const handleDeselectAll = React.useCallback(() => {
+    if (externalOnFileSelect) {
+      // Если есть внешний обработчик, вызываем его для каждого выбранного файла
+      selectedIds.forEach((id) => {
+        externalOnFileSelect(id, "unselect");
+      });
+    } else {
+      setInternalSelectedIds([]);
+    }
+  }, [selectedIds, externalOnFileSelect]);
+
+  // Обработка Ctrl+A для выделения всех и Escape для снятия выделения
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+        e.preventDefault();
+        if (sortedAndFilteredFiles.length > 0) {
+          handleSelectAll();
+        }
+      }
+      // Escape для снятия выделения
+      if (e.key === "Escape" && selectedIds.length > 0) {
+        handleDeselectAll();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sortedAndFilteredFiles, selectedIds, handleSelectAll, handleDeselectAll]);
+
   return (
     <div>
       {withActions && (
@@ -183,13 +315,22 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
           onViewModeChange={setViewMode}
           onSearch={onSearch}
           selectedCount={selectedIds.length}
+          totalCount={sortedAndFilteredFiles.length}
+          onSelectAll={handleSelectAll}
+          onDeselectAll={selectedIds.length > 0 ? handleDeselectAll : undefined}
           onDownload={onClickDownload}
-          onDelete={onClickRemove}
+          onDelete={disableDelete ? undefined : (externalOnDelete || onClickRemove)}
           onShare={onClickShare}
+          onRestore={externalOnRestore || onClickRestore}
+          hideDownload={hideDownload}
+          hideShare={hideShare}
           onSort={onSort}
           onFilter={setFileFilter}
           currentFilter={fileFilter}
           isDownloading={isDownloading}
+          deleteTitle={deleteTitle}
+          deleteDescription={deleteDescription}
+          deleteButtonText={deleteButtonText}
         />
       )}
 
@@ -197,22 +338,12 @@ export const Files: React.FC<FilesProps> = ({ items, withActions, defaultFilter 
         <FileList
           items={sortedAndFilteredFiles}
           viewMode={viewMode}
-          onFileSelect={(id: string, type: FileSelectType) => onFileSelect(Number(id), type)}
-          onFileClick={async (file) => {
-            // Если файл не выбран, скачиваем его при клике
-            if (!selectedIds.includes(file.id)) {
-              try {
-                setIsDownloading(true);
-                await Api.files.downloadFile(file.filename, file.originalName);
-                toast.success("Файл скачан");
-              } catch (error) {
-                console.error("Download error:", error);
-                toast.error("Не удалось скачать файл");
-              } finally {
-                setIsDownloading(false);
-              }
-            }
+          onFileSelect={(id: string, type: FileSelectType) => {
+            const numId = Number(id);
+            onFileSelect(numId, type);
           }}
+          selectedIds={selectedIds}
+          onToggleFavorite={handleToggleFavorite}
         />
       ) : (
         <div

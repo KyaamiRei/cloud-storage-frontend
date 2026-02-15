@@ -14,6 +14,8 @@ interface FileListProps {
   onFileSelect: (id: string, type: FileSelectType) => void;
   onFileClick?: (item: FileItem) => void;
   viewMode?: ViewMode;
+  selectedIds?: number[];
+  onToggleFavorite?: (id: number) => void;
 }
 
 const formatFileSize = (bytes?: number): string => {
@@ -27,8 +29,12 @@ export const FileList: React.FC<FileListProps> = ({
   items, 
   onFileSelect, 
   onFileClick,
-  viewMode = "grid"
+  viewMode = "grid",
+  selectedIds = [],
+  onToggleFavorite,
 }) => {
+  const lastSelectedIndexRef = React.useRef<number>(-1);
+
   const handleSelect = useCallback(
     (e: { added: (HTMLElement | SVGElement)[]; removed: (HTMLElement | SVGElement)[] }) => {
       e.added.forEach((el) => {
@@ -54,9 +60,41 @@ export const FileList: React.FC<FileListProps> = ({
     [onFileSelect],
   );
 
+  const handleFileSelectWithShift = useCallback(
+    (id: number, event: React.MouseEvent) => {
+      if (event.shiftKey && lastSelectedIndexRef.current >= 0) {
+        // Выделяем диапазон от последнего выбранного до текущего
+        const currentIndex = items.findIndex((item) => item.id === id);
+        const startIndex = Math.min(lastSelectedIndexRef.current, currentIndex);
+        const endIndex = Math.max(lastSelectedIndexRef.current, currentIndex);
+
+        for (let i = startIndex; i <= endIndex; i++) {
+          const itemId = items[i].id;
+          if (!selectedIds.includes(itemId)) {
+            onFileSelect(String(itemId), "select");
+          }
+        }
+      } else {
+        // Обычное выделение
+        const isSelected = selectedIds.includes(id);
+        onFileSelect(String(id), isSelected ? "unselect" : "select");
+        const currentIndex = items.findIndex((item) => item.id === id);
+        if (currentIndex >= 0) {
+          lastSelectedIndexRef.current = currentIndex;
+        }
+      }
+    },
+    [items, selectedIds, onFileSelect],
+  );
+
   const handleFileClick = useCallback(
-    (item: FileItem) => {
+    (item: FileItem, event?: React.MouseEvent) => {
       if (onFileClick) {
+        // Предотвращаем всплытие события
+        if (event) {
+          event.stopPropagation();
+          event.preventDefault();
+        }
         onFileClick(item);
       }
     },
@@ -76,7 +114,22 @@ export const FileList: React.FC<FileListProps> = ({
         render: (text: string, record: FileItem) => (
           <div 
             className={styles.listFileName}
-            onClick={() => handleFileClick(record)}
+            onClick={(e) => {
+              const isSelected = selectedIds.includes(record.id);
+              if (e.ctrlKey || e.metaKey) {
+                // Ctrl/Cmd + клик: переключаем выделение
+                handleFileSelectWithShift(record.id, e);
+              } else if (e.shiftKey) {
+                // Shift + клик: выделяем диапазон
+                handleFileSelectWithShift(record.id, e);
+              } else if (isSelected && onFileClick) {
+                // Если файл уже выбран, выполняем действие
+                handleFileClick(record, e);
+              } else {
+                // Обычный клик: выделяем файл
+                handleFileSelectWithShift(record.id, e);
+              }
+            }}
           >
             <span className={styles.listFileExtension}>
               {getExtensionFromFileName(record.filename)?.toUpperCase() || "FILE"}
@@ -116,14 +169,45 @@ export const FileList: React.FC<FileListProps> = ({
           rowKey="id"
           pagination={false}
           className={styles.table}
-          onRow={(record) => ({
-            onClick: () => handleFileClick(record),
-            className: styles.tableRow,
-          })}
+          onRow={(record) => {
+            const isSelected = selectedIds.includes(record.id);
+            return {
+              onClick: (e: any) => {
+                if (e.ctrlKey || e.metaKey) {
+                  // Ctrl/Cmd + клик: переключаем выделение
+                  handleFileSelectWithShift(record.id, e);
+                } else if (e.shiftKey) {
+                  // Shift + клик: выделяем диапазон
+                  handleFileSelectWithShift(record.id, e);
+                } else if (isSelected && onFileClick) {
+                  // Если файл уже выбран, выполняем действие
+                  handleFileClick(record, e);
+                } else {
+                  // Обычный клик: выделяем файл
+                  handleFileSelectWithShift(record.id, e);
+                }
+              },
+              className: `${styles.tableRow} ${isSelected ? styles.selected : ""}`,
+            };
+          }}
         />
       </div>
     );
   }
+
+  // Синхронизируем класс active с selectedIds
+  React.useEffect(() => {
+    items.forEach((item) => {
+      const element = document.querySelector(`[data-id="${item.id}"]`);
+      if (element) {
+        if (selectedIds.includes(item.id)) {
+          element.classList.add("active");
+        } else {
+          element.classList.remove("active");
+        }
+      }
+    });
+  }, [items, selectedIds]);
 
   return (
     <div className={styles.root}>
@@ -131,24 +215,49 @@ export const FileList: React.FC<FileListProps> = ({
         <div
           key={item.id}
           data-id={item.id}
-          className={styles.fileItem}>
+          className={`${styles.fileItem} ${selectedIds.includes(item.id) ? "active" : ""}`}>
           <FileCard
             filename={item.filename}
             originalName={item.originalName}
             size={item.size}
-            onClick={() => handleFileClick(item)}
+            isFavorite={item.isFavorite || false}
+            onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(item.id) : undefined}
+            isSelected={selectedIds.includes(item.id)}
+            onClick={(e) => {
+              // Предотвращаем всплытие и конфликт с Selecto
+              e.stopPropagation();
+              e.preventDefault();
+              
+              const isSelected = selectedIds.includes(item.id);
+              
+              if (e.ctrlKey || e.metaKey) {
+                // Ctrl/Cmd + клик: переключаем выделение
+                handleFileSelectWithShift(item.id, e);
+              } else if (e.shiftKey) {
+                // Shift + клик: выделяем диапазон
+                handleFileSelectWithShift(item.id, e);
+              } else if (isSelected && onFileClick) {
+                // Если файл уже выбран, выполняем действие (например, открыть)
+                handleFileClick(item, e);
+              } else {
+                // Обычный клик: выделяем файл
+                handleFileSelectWithShift(item.id, e);
+              }
+            }}
           />
         </div>
       ))}
 
       <Selecto
         selectableTargets={[`.${styles.fileItem}`]}
-        selectByClick
+        selectByClick={false}
         hitRate={10}
-        selectFromInside
-        toggleContinueSelect={["shift"]}
+        selectFromInside={false}
+        toggleContinueSelect={["shift", "ctrl"]}
         continueSelect={false}
         onSelect={handleSelect}
+        preventClickEventOnDrag={true}
+        preventDefaultOnDrag={true}
       />
     </div>
   );

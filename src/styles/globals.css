@@ -23,6 +23,19 @@
   --radius-xl: 16px;
 }
 
+/* Стили для множественного выделения через Selecto */
+.selecto-selection {
+  background: rgba(26, 115, 232, 0.1);
+  border: 2px dashed var(--primary-color);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.selecto-selected {
+  position: relative;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -55,90 +68,149 @@ body {
 }
 
 /* Улучшенные стили для Empty компонента */
-.body {
-  .empty-block {
-    padding: 60px 20px;
+.empty-block {
+  padding: 60px 20px;
 
-    .ant-empty-description {
-      color: var(--text-secondary);
-      font-size: 16px;
-    }
-
-    .ant-empty-image {
-      opacity: 0.6;
-    }
+  .ant-empty-description {
+    color: var(--text-secondary);
+    font-size: 16px;
   }
 
-  /* Улучшенные стили для Popconfirm */
-  .ant-popover {
-    .ant-popover-inner {
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      padding: 8px;
-    }
+  .ant-empty-image {
+    opacity: 0.6;
   }
+}
 
-  /* Улучшенные стили для уведомлений */
-  .ant-notification {
-    .ant-notification-notice {
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      backdrop-filter: blur(10px);
-    }
+/* Улучшенные стили для Popconfirm */
+.ant-popover {
+  .ant-popover-inner {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 8px;
   }
+}
 
-  /* Стили для кнопок */
-  .ant-btn {
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    transition: all 0.2s ease;
+/* Улучшенные стили для уведомлений */
+.ant-notification {
+  .ant-notification-notice {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(10px);
+  }
+}
+
+/* Стили для кнопок */
+.ant-btn {
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  height: auto;
+  padding: 6px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  &.ant-btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
     
+    &:hover:not(:disabled) {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      color: #ffffff;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &.ant-btn-text {
+    border: none;
+    box-shadow: none;
+    color: var(--text-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+  }
+
+  &.ant-btn-dangerous {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+
+    &:hover:not(:disabled) {
+      background: var(--danger-color);
+      border-color: var(--danger-color);
+      color: #ffffff;
+    }
+
     &.ant-btn-primary {
-      background: var(--primary-color);
-      border-color: var(--primary-color);
-      
-      &:hover {
-        background: var(--primary-hover);
-        border-color: var(--primary-hover);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-md);
+      background: var(--danger-color);
+      border-color: var(--danger-color);
+      color: #ffffff;
+
+      &:hover:not(:disabled) {
+        background: #d32f2f;
+        border-color: #d32f2f;
+        color: #ffffff;
       }
     }
   }
 
-  /* Стили для Input */
-  .ant-input,
-  .ant-input-search {
-    border-radius: var(--radius-md);
-    border-color: var(--border-color);
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+}
+
+/* Стили для Input */
+.ant-input,
+.ant-input-search {
+  border-radius: var(--radius-md);
+  border-color: var(--border-color);
+  
+  &:hover {
+    border-color: var(--primary-color);
+  }
+  
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+}
+
+/* Стили для Menu */
+.ant-menu {
+  border-radius: var(--radius-md);
+  
+  .ant-menu-item {
+    border-radius: var(--radius-sm);
+    margin: 2px 8px;
     
     &:hover {
-      border-color: var(--primary-color);
+      background: var(--bg-hover);
     }
     
-    &:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px var(--primary-light);
-    }
-  }
-
-  /* Стили для Menu */
-  .ant-menu {
-    border-radius: var(--radius-md);
-    
-    .ant-menu-item {
-      border-radius: var(--radius-sm);
-      margin: 2px 8px;
-      
-      &:hover {
-        background: var(--bg-hover);
-      }
-      
-      &.ant-menu-item-selected {
-        background: var(--primary-light);
-        color: var(--primary-color);
-        font-weight: 500;
-      }
+    &.ant-menu-item-selected {
+      background: var(--primary-light);
+      color: var(--primary-color);
+      font-weight: 500;
     }
   }
 }

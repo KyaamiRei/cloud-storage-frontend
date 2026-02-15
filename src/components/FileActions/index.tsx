@@ -7,6 +7,7 @@ interface FileActionsProps {
   onClickDownload?: VoidFunction;
   isActive: boolean;
   isDownload?: boolean;
+  isTrash?: boolean;
 }
 
 export const FileActions: React.FC<FileActionsProps> = ({
@@ -14,6 +15,7 @@ export const FileActions: React.FC<FileActionsProps> = ({
   onClickDownload,
   isActive,
   isDownload,
+  isTrash = false,
 }) => {
   return (
     <div className={styles.root}>
@@ -29,7 +31,7 @@ export const FileActions: React.FC<FileActionsProps> = ({
 
       <Popconfirm
         title="Удалить файл(ы)?"
-        description="Все файлы будут перемещены в корзину"
+        description={isTrash ? "Файлы будут удалены навсегда. Это действие нельзя отменить." : "Все файлы будут перемещены в корзину"}
         okText="Да"
         cancelText="Нет"
         disabled={!isActive}
@@ -38,7 +40,7 @@ export const FileActions: React.FC<FileActionsProps> = ({
           disabled={!isActive}
           type="primary"
           danger>
-          Удалить
+          {isTrash ? "Удалить навсегда" : "Удалить"}
         </Button>
       </Popconfirm>
     </div>

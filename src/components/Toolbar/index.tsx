@@ -16,6 +16,9 @@ import {
   SoundOutlined,
   FileZipOutlined,
   FileOutlined,
+  CheckSquareOutlined,
+  BorderOutlined,
+  UndoOutlined,
 } from "@ant-design/icons";
 import styles from "./Toolbar.module.scss";
 import { FileCategory, getFileCategoryLabel } from "@/utils/getFileType";
@@ -27,13 +30,22 @@ interface ToolbarProps {
   onViewModeChange: (mode: ViewMode) => void;
   onSearch?: (value: string) => void;
   selectedCount?: number;
+  totalCount?: number; // Общее количество файлов для "Выделить все"
+  onSelectAll?: () => void; // Выделить все файлы
+  onDeselectAll?: () => void; // Снять выделение со всех
   onDownload?: () => void;
   onDelete?: () => void;
   onShare?: () => void;
+  onRestore?: () => void; // Восстановление файлов
+  hideDownload?: boolean; // Скрыть кнопку скачать
+  hideShare?: boolean; // Скрыть кнопку поделиться
   onSort?: (type: "name" | "date" | "size" | "type") => void;
   onFilter?: (category: FileCategory) => void;
   currentFilter?: FileCategory;
   isDownloading?: boolean;
+  deleteTitle?: string; // Кастомный заголовок для удаления
+  deleteDescription?: string; // Кастомное описание для удаления
+  deleteButtonText?: string; // Кастомный текст кнопки удаления
 }
 
 const sortMenuItems = [
@@ -86,15 +98,25 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onViewModeChange,
   onSearch,
   selectedCount = 0,
+  totalCount = 0,
+  onSelectAll,
+  onDeselectAll,
   onDownload,
   onDelete,
   onShare,
+  onRestore,
   onSort,
   onFilter,
   currentFilter = "all",
   isDownloading = false,
+  deleteTitle = "Удалить выбранные файлы?",
+  deleteDescription,
+  deleteButtonText = "Удалить",
+  hideDownload = false,
+  hideShare = false,
 }) => {
   const hasSelection = selectedCount > 0;
+  const allSelected = totalCount > 0 && selectedCount === totalCount;
 
   return (
     <div className={styles.root}>
@@ -103,8 +125,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <Space>
             <span className={styles.selectionText}>
               Выбрано: {selectedCount}
+              {totalCount > 0 && ` из ${totalCount}`}
             </span>
-            {onDownload && (
+            {onDeselectAll && (
+              <Button
+                type="text"
+                icon={<BorderOutlined />}
+                onClick={onDeselectAll}
+                className={styles.actionButton}
+                title="Снять выделение">
+                Снять выделение
+              </Button>
+            )}
+            {onRestore && (
+              <Button
+                type="text"
+                icon={<UndoOutlined />}
+                onClick={onRestore}
+                className={styles.actionButton}>
+                Восстановить
+              </Button>
+            )}
+            {onDownload && !hideDownload && (
               <Button
                 type="text"
                 icon={<DownloadOutlined />}
@@ -115,7 +157,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 {isDownloading ? "Скачивание..." : "Скачать"}
               </Button>
             )}
-            {onShare && (
+            {onShare && !hideShare && (
               <Button
                 type="text"
                 icon={<ShareAltOutlined />}
@@ -126,8 +168,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
             {onDelete && (
               <Popconfirm
-                title="Удалить выбранные файлы?"
-                description={`Будет удалено файлов: ${selectedCount}`}
+                title={deleteTitle}
+                description={deleteDescription || `Будет удалено файлов: ${selectedCount}`}
                 onConfirm={onDelete}
                 okText="Да"
                 cancelText="Нет"
@@ -137,22 +179,34 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   danger
                   icon={<DeleteOutlined />}
                   className={styles.actionButton}>
-                  Удалить
+                  {deleteButtonText}
                 </Button>
               </Popconfirm>
             )}
           </Space>
         ) : (
-          <div className={styles.searchContainer}>
-            <Input
-              placeholder="Поиск в файлах..."
-              allowClear
-              onChange={(e) => onSearch?.(e.target.value)}
-              onPressEnter={(e) => onSearch?.((e.target as HTMLInputElement).value)}
-              className={styles.search}
-              prefix={<SearchOutlined />}
-            />
-          </div>
+          <Space>
+            {onSelectAll && totalCount > 0 && (
+              <Button
+                type="text"
+                icon={<CheckSquareOutlined />}
+                onClick={onSelectAll}
+                className={styles.actionButton}
+                title="Выделить все (Ctrl+A)">
+                Выделить все
+              </Button>
+            )}
+            <div className={styles.searchContainer}>
+              <Input
+                placeholder="Поиск в файлах..."
+                allowClear
+                onChange={(e) => onSearch?.(e.target.value)}
+                onPressEnter={(e) => onSearch?.((e.target as HTMLInputElement).value)}
+                className={styles.search}
+                prefix={<SearchOutlined />}
+              />
+            </div>
+          </Space>
         )}
       </div>
 

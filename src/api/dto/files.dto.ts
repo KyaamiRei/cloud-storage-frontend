@@ -8,4 +8,5 @@ export interface FileItem {
   user: User;
   deletedAt: string | null;
   id: number;
+  isFavorite?: boolean;
 }

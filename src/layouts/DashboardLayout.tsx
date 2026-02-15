@@ -73,29 +73,18 @@ export const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children })
             {
               type: "divider",
             },
+            
+            {
+              key: `/dashboard/favorites`,
+              icon: <StarOutlined />,
+              label: `Избранное`,
+              onClick: () => router.push("/dashboard/favorites"),
+            },
             {
               key: `/dashboard/statistics`,
               icon: <BarChartOutlined />,
               label: `Статистика`,
               onClick: () => router.push("/dashboard/statistics"),
-            },
-            {
-              key: "starred",
-              icon: <StarOutlined />,
-              label: `Избранное`,
-              onClick: () => {
-                // TODO: Implement starred files
-                console.log("Starred files");
-              },
-            },
-            {
-              key: "recent",
-              icon: <ClockCircleOutlined />,
-              label: `Недавние`,
-              onClick: () => {
-                // TODO: Implement recent files
-                console.log("Recent files");
-              },
             },
             {
               type: "divider",

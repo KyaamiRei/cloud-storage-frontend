@@ -23,3 +23,13 @@ export const getMe = async (): Promise<User> => {
 export const logout = () => {
   destroyCookie(null, "_token", { path: "/" });
 };
+
+export interface UpdateProfileDTO {
+  fullName?: string;
+  email?: string;
+  password?: string;
+}
+
+export const updateProfile = async (data: UpdateProfileDTO): Promise<User> => {
+  return (await axios.patch("/users/me", data)).data;
+};
