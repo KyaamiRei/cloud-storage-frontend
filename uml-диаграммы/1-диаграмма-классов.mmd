@@ -1,0 +1,124 @@
+```mermaid
+classDiagram
+    class UserEntity {
+        -number id
+        -string email
+        -string password
+        -string fullName
+        +FileEntity[] files
+    }
+
+    class FileEntity {
+        -number id
+        -string filename
+        -string originalname
+        -number size
+        -string mimetype
+        -number userId
+        -Date createdAt
+        -Date deletedAt
+        -boolean isFavorite
+        +UserEntity user
+    }
+
+    class FileType {
+        <<enumeration>>
+        PHOTOS
+        TRASH
+        FAVORITES
+    }
+
+    class UsersService {
+        -Repository~UserEntity~ repository
+        +findByEmail(email: string) Promise~UserEntity~
+        +findById(id: string) Promise~UserEntity~
+        +create(dto: CreateUserDto) Promise~UserEntity~
+    }
+
+    class FilesService {
+        -Repository~FileEntity~ repository
+        +findAll(userId: number, fileType?: FileType) Promise~FileEntity[]~
+        +create(file: Express.Multer.File, userId: string) Promise~FileEntity~
+        +remove(userId: string, ids: string) Promise~void~
+        +restore(userId: string, ids: string) Promise~{restored: number}~
+        +toggleFavorite(userId: number, fileId: number) Promise~FileEntity~
+        +getFavorites(userId: number) Promise~FileEntity[]~
+    }
+
+    class AuthService {
+        -UsersService userService
+        -JwtService jwtService
+        +validateUser(email: string, password: string) Promise~any~
+        +register(dto: CreateUserDto) Promise~{token: string}~
+        +login(user: UserEntity) Promise~{token: string}~
+    }
+
+    class UsersController {
+        -UsersService usersService
+        +getMe(id: string) Promise~UserEntity~
+    }
+
+    class FilesController {
+        -FilesService filesService
+        +findAll(userId: number, fileType?: FileType) Promise~FileEntity[]~
+        +create(file: Express.Multer.File, userId: string) Promise~FileEntity~
+        +remove(userId: string, ids: string) Promise~void~
+        +restore(userId: string, ids: string) Promise~{restored: number}~
+        +toggleFavorite(userId: number, id: number) Promise~FileEntity~
+        +getFavorites(userId: number) Promise~FileEntity[]~
+    }
+
+    class AuthController {
+        -AuthService authService
+        +login(dto: CreateUserDto) Promise~{token: string}~
+        +register(dto: CreateUserDto) Promise~{token: string}~
+    }
+
+    class JwtStrategy {
+        -UsersService userService
+        +validate(payload: {id: string}) Promise~{id: number}~
+    }
+
+    class LocalStrategy {
+        -AuthService authService
+        +validate(email: string, password: string) Promise~any~
+    }
+
+    class JwtAuthGuard {
+    }
+
+    class LocalAuthGuard {
+    }
+
+    class CreateUserDto {
+        +string email
+        +string password
+        +string fullName
+    }
+
+    %% Связи
+    UserEntity "1" *-- "много" FileEntity : владеет
+    FileEntity "много" --> "1" UserEntity : принадлежит
+
+    UsersService ..> UserEntity : использует
+    FilesService ..> FileEntity : использует
+    FilesService ..> FileType : использует
+
+    AuthService ..> UsersService : зависит от
+    AuthService ..> CreateUserDto : использует
+    AuthService ..> UserEntity : использует
+
+    UsersController ..> UsersService : использует
+    FilesController ..> FilesService : использует
+    AuthController ..> AuthService : использует
+
+    JwtStrategy ..> UsersService : использует
+    LocalStrategy ..> AuthService : использует
+
+    JwtAuthGuard ..> JwtStrategy : использует
+    LocalAuthGuard ..> LocalStrategy : использует
+
+    AuthController ..> LocalAuthGuard : защищен
+    FilesController ..> JwtAuthGuard : защищен
+    UsersController ..> JwtAuthGuard : защищен
+```

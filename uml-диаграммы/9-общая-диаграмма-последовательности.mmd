@@ -1,0 +1,263 @@
+```mermaid
+sequenceDiagram
+    actor Пользователь as User
+    participant Frontend as Frontend (Next.js)
+    participant AuthCtrl as AuthController
+    participant FilesCtrl as FilesController
+    participant JWTGuard as JwtAuthGuard
+    participant LocalGuard as LocalAuthGuard
+    participant JWTStrategy as JwtStrategy
+    participant LocalStrategy as LocalStrategy
+    participant AuthSvc as AuthService
+    participant UsersSvc as UsersService
+    participant FilesSvc as FilesService
+    participant Storage as Хранилище файлов
+    participant DB as База данных (PostgreSQL)
+    participant JWT as JWT Service
+
+    Note over User,JWT: 1. Регистрация пользователя
+    User->>Frontend: Ввод данных регистрации (email, password, fullName)
+    Frontend->>AuthCtrl: POST /register (CreateUserDto)
+    activate AuthCtrl
+    AuthCtrl->>AuthSvc: register(dto)
+    activate AuthSvc
+    AuthSvc->>UsersSvc: create(dto)
+    activate UsersSvc
+    UsersSvc->>DB: INSERT INTO users
+    activate DB
+    DB-->>UsersSvc: UserEntity
+    deactivate DB
+    UsersSvc-->>AuthSvc: UserEntity
+    deactivate UsersSvc
+    AuthSvc->>JWT: sign({id: user.id})
+    activate JWT
+    JWT-->>AuthSvc: token
+    deactivate JWT
+    AuthSvc-->>AuthCtrl: {token: string}
+    deactivate AuthSvc
+    AuthCtrl-->>Frontend: {token: string}
+    deactivate AuthCtrl
+    Frontend-->>User: Сохранение токена и перенаправление
+
+    Note over User,JWT: 2. Вход в систему
+    User->>Frontend: Ввод email и password
+    Frontend->>AuthCtrl: POST /login (email, password)
+    activate AuthCtrl
+    AuthCtrl->>LocalGuard: проверка доступа
+    activate LocalGuard
+    LocalGuard->>LocalStrategy: validate(email, password)
+    activate LocalStrategy
+    LocalStrategy->>AuthSvc: validateUser(email, password)
+    activate AuthSvc
+    AuthSvc->>UsersSvc: findByEmail(email)
+    activate UsersSvc
+    UsersSvc->>DB: SELECT * FROM users WHERE email = ?
+    activate DB
+    DB-->>UsersSvc: UserEntity
+    deactivate DB
+    UsersSvc-->>AuthSvc: UserEntity
+    deactivate UsersSvc
+    
+    alt Пользователь найден и пароль верный
+        AuthSvc-->>LocalStrategy: UserEntity (без password)
+        LocalStrategy-->>LocalGuard: UserEntity
+        deactivate LocalStrategy
+        LocalGuard-->>AuthCtrl: req.user = UserEntity
+        deactivate LocalGuard
+        AuthCtrl->>AuthSvc: login(user)
+        activate AuthSvc
+        AuthSvc->>JWT: sign({id: user.id})
+        activate JWT
+        JWT-->>AuthSvc: token
+        deactivate JWT
+        AuthSvc-->>AuthCtrl: {token: string}
+        deactivate AuthSvc
+        AuthCtrl-->>Frontend: {token: string}
+        Frontend-->>User: Сохранение токена и перенаправление
+    else Пользователь не найден или пароль неверный
+        AuthSvc-->>LocalStrategy: null
+        deactivate AuthSvc
+        LocalStrategy-->>LocalGuard: UnauthorizedException
+        deactivate LocalStrategy
+        LocalGuard-->>AuthCtrl: Ошибка 401
+        deactivate LocalGuard
+        AuthCtrl-->>Frontend: Ошибка авторизации
+        Frontend-->>User: Сообщение об ошибке
+    end
+    deactivate AuthCtrl
+
+    Note over User,JWT: 3. Получение списка файлов
+    User->>Frontend: Открытие страницы файлов
+    Frontend->>FilesCtrl: GET /files?type=all Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard->>JWT: проверка токена
+    activate JWT
+    JWT-->>JWTGuard: payload {id: number}
+    deactivate JWT
+    JWTGuard->>JWTStrategy: validate(payload)
+    activate JWTStrategy
+    JWTStrategy->>UsersSvc: findById(payload.id)
+    activate UsersSvc
+    UsersSvc->>DB: SELECT * FROM users WHERE id = ?
+    activate DB
+    DB-->>UsersSvc: UserEntity
+    deactivate DB
+    UsersSvc-->>JWTStrategy: UserEntity
+    deactivate UsersSvc
+    JWTStrategy-->>JWTGuard: {id: user.id}
+    deactivate JWTStrategy
+    JWTGuard-->>FilesCtrl: req.user = {id: number}
+    deactivate JWTGuard
+    FilesCtrl->>FilesSvc: findAll(userId, fileType)
+    activate FilesSvc
+    FilesSvc->>DB: SELECT * FROM files WHERE userId = ? AND deletedAt IS NULL
+    activate DB
+    DB-->>FilesSvc: FileEntity[]
+    deactivate DB
+    FilesSvc-->>FilesCtrl: FileEntity[]
+    deactivate FilesSvc
+    FilesCtrl-->>Frontend: FileEntity[]
+    deactivate FilesCtrl
+    Frontend-->>User: Отображение списка файлов
+
+    Note over User,JWT: 4. Загрузка файла
+    User->>Frontend: Выбор файла для загрузки
+    Frontend->>FilesCtrl: POST /files (FormData с файлом) Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard->>JWT: проверка токена
+    activate JWT
+    JWT-->>JWTGuard: payload {id: number}
+    deactivate JWT
+    JWTGuard->>JWTStrategy: validate(payload)
+    activate JWTStrategy
+    JWTStrategy->>UsersSvc: findById(payload.id)
+    activate UsersSvc
+    UsersSvc->>DB: SELECT * FROM users WHERE id = ?
+    activate DB
+    DB-->>UsersSvc: UserEntity
+    deactivate DB
+    UsersSvc-->>JWTStrategy: UserEntity
+    deactivate UsersSvc
+    JWTStrategy-->>JWTGuard: {id: user.id}
+    deactivate JWTStrategy
+    JWTGuard-->>FilesCtrl: req.user = {id: number}
+    deactivate JWTGuard
+    FilesCtrl->>FilesCtrl: Валидация файла (MaxFileSizeValidator)
+    
+    alt Файл валиден
+        FilesCtrl->>Storage: Сохранение файла на диск
+        activate Storage
+        Storage-->>FilesCtrl: file.filename
+        deactivate Storage
+        FilesCtrl->>FilesSvc: create(file, userId)
+        activate FilesSvc
+        FilesSvc->>DB: INSERT INTO files (filename, originalname, size, mimetype, userId)
+        activate DB
+        DB-->>FilesSvc: FileEntity
+        deactivate DB
+        FilesSvc-->>FilesCtrl: FileEntity
+        deactivate FilesSvc
+        FilesCtrl-->>Frontend: FileEntity
+        Frontend-->>User: Файл успешно загружен
+    else Файл невалиден (слишком большой)
+        FilesCtrl-->>Frontend: BadRequestException
+        Frontend-->>User: Ошибка: файл слишком большой
+    end
+    deactivate FilesCtrl
+
+    Note over User,JWT: 5. Удаление файлов в корзину
+    User->>Frontend: Выбор файлов и нажатие "Удалить"
+    Frontend->>FilesCtrl: DELETE /files?ids=1,2,3 Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard-->>FilesCtrl: userId
+    deactivate JWTGuard
+    FilesCtrl->>FilesSvc: remove(userId, ids)
+    activate FilesSvc
+    FilesSvc->>DB: UPDATE files SET deletedAt = NOW() WHERE id IN (1,2,3) AND userId = ?
+    activate DB
+    DB-->>FilesSvc: результат обновления
+    deactivate DB
+    FilesSvc-->>FilesCtrl: результат
+    deactivate FilesSvc
+    FilesCtrl-->>Frontend: успех
+    deactivate FilesCtrl
+    Frontend-->>User: Файлы перемещены в корзину
+
+    Note over User,JWT: 6. Восстановление файлов из корзины
+    User->>Frontend: Выбор файлов в корзине и "Восстановить"
+    Frontend->>FilesCtrl: PATCH /files/restore?ids=1,2,3 Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard-->>FilesCtrl: userId
+    deactivate JWTGuard
+    FilesCtrl->>FilesSvc: restore(userId, ids)
+    activate FilesSvc
+    FilesSvc->>DB: UPDATE files SET deletedAt = NULL WHERE id IN (1,2,3) AND userId = ? AND deletedAt IS NOT NULL
+    activate DB
+    DB-->>FilesSvc: {restored: количество}
+    deactivate DB
+    FilesSvc-->>FilesCtrl: {restored: number}
+    deactivate FilesSvc
+    FilesCtrl-->>Frontend: {restored: number}
+    deactivate FilesCtrl
+    Frontend-->>User: Файлы восстановлены
+
+    Note over User,JWT: 7. Добавление в избранное
+    User->>Frontend: Нажатие на "Избранное" для файла
+    Frontend->>FilesCtrl: PATCH /files/:id/favorite Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard-->>FilesCtrl: userId
+    deactivate JWTGuard
+    FilesCtrl->>FilesSvc: toggleFavorite(userId, fileId)
+    activate FilesSvc
+    FilesSvc->>DB: SELECT * FROM files WHERE id = ? AND userId = ?
+    activate DB
+    DB-->>FilesSvc: FileEntity
+    deactivate DB
+    
+    alt Файл найден и не в корзине
+        FilesSvc->>FilesSvc: file.isFavorite = !file.isFavorite
+        FilesSvc->>DB: UPDATE files SET isFavorite = ? WHERE id = ?
+        activate DB
+        DB-->>FilesSvc: FileEntity
+        deactivate DB
+        FilesSvc-->>FilesCtrl: FileEntity
+        FilesCtrl-->>Frontend: FileEntity
+        Frontend-->>User: Статус избранного обновлен
+    else Файл не найден или в корзине
+        FilesSvc-->>FilesCtrl: BadRequestException
+        FilesCtrl-->>Frontend: Ошибка
+        Frontend-->>User: Сообщение об ошибке
+    end
+    deactivate FilesSvc
+    deactivate FilesCtrl
+
+    Note over User,JWT: 8. Получение избранных файлов
+    User->>Frontend: Открытие страницы "Избранное"
+    Frontend->>FilesCtrl: GET /files/favorites Authorization: Bearer token
+    activate FilesCtrl
+    FilesCtrl->>JWTGuard: проверка токена
+    activate JWTGuard
+    JWTGuard-->>FilesCtrl: userId
+    deactivate JWTGuard
+    FilesCtrl->>FilesSvc: getFavorites(userId)
+    activate FilesSvc
+    FilesSvc->>DB: SELECT * FROM files WHERE userId = ? AND isFavorite = true AND deletedAt IS NULL
+    activate DB
+    DB-->>FilesSvc: FileEntity[]
+    deactivate DB
+    FilesSvc-->>FilesCtrl: FileEntity[]
+    deactivate FilesSvc
+    FilesCtrl-->>Frontend: FileEntity[]
+    deactivate FilesCtrl
+    Frontend-->>User: Отображение избранных файлов
+```

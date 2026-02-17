@@ -1,0 +1,87 @@
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (Next.js)"]
+        FrontendApp[Веб-интерфейс]
+        APIClient[API клиент]
+        StateManagement[Управление состоянием]
+        UIComponents[Компоненты UI]
+    end
+
+    subgraph Backend["Backend (NestJS)"]
+        subgraph AuthModule["Модуль аутентификации"]
+            AuthCtrl[AuthController]
+            AuthSvc[AuthService]
+            JWTStrategy[JWT Strategy]
+            LocalStrategy[Local Strategy]
+            JWTGuard[JWT Guard]
+            LocalGuard[Local Guard]
+        end
+        
+        subgraph UsersModule["Модуль пользователей"]
+            UsersCtrl[UsersController]
+            UsersSvc[UsersService]
+        end
+        
+        subgraph FilesModule["Модуль файлов"]
+            FilesCtrl[FilesController]
+            FilesSvc[FilesService]
+            FileStorage[Хранилище файлов]
+        end
+        
+        AppModule[AppModule]
+    end
+
+    subgraph Database["База данных"]
+        PostgreSQL[(PostgreSQL)]
+        UsersTable[Таблица users]
+        FilesTable[Таблица files]
+    end
+
+    subgraph External["Внешние сервисы"]
+        JWTService[JWT Service]
+        TypeORM[TypeORM]
+    end
+
+    %% Связи Frontend
+    FrontendApp --> APIClient
+    APIClient --> StateManagement
+    FrontendApp --> UIComponents
+    StateManagement --> APIClient
+
+    %% Связи Backend
+    AppModule --> AuthCtrl
+    AppModule --> UsersCtrl
+    AppModule --> FilesCtrl
+
+    AuthCtrl --> AuthSvc
+    AuthSvc --> UsersSvc
+    AuthSvc --> JWTService
+    JWTStrategy --> UsersSvc
+    LocalStrategy --> AuthSvc
+    JWTGuard --> JWTStrategy
+    LocalGuard --> LocalStrategy
+
+    UsersCtrl --> UsersSvc
+    UsersCtrl -.-> JWTGuard
+
+    FilesCtrl --> FilesSvc
+    FilesCtrl -.-> JWTGuard
+    FilesSvc --> FileStorage
+
+    %% Связи с базой данных
+    UsersSvc --> TypeORM
+    FilesSvc --> TypeORM
+    TypeORM --> PostgreSQL
+    PostgreSQL --> UsersTable
+    PostgreSQL --> FilesTable
+
+    %% Связи Frontend-Backend
+    APIClient -->|HTTP запросы| AuthCtrl
+    APIClient -->|HTTP запросы| UsersCtrl
+    APIClient -->|HTTP запросы| FilesCtrl
+
+    style Frontend fill:#e1f5ff
+    style Backend fill:#fff4e1
+    style Database fill:#e8f5e9
+    style External fill:#f3e5f5
+```

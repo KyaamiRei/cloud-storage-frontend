@@ -1,0 +1,88 @@
+```mermaid
+graph TB
+    subgraph Client["Клиентское устройство"]
+        Browser[Веб-браузер<br/>Chrome, Firefox, Safari]
+    end
+
+    Internet[Интернет]
+
+    subgraph Server["Веб-сервер (Production)"]
+        subgraph NextJS["Next.js Frontend"]
+            ReactApp[React приложение]
+            APIClient[API клиент Axios]
+            Store[Zustand Store]
+            UIComponents[UI компоненты Ant Design]
+        end
+
+        subgraph NestJS["NestJS Backend"]
+            RESTAPI[REST API]
+            AuthModule[Auth Module]
+            UsersModule[Users Module]
+            FilesModule[Files Module]
+            Swagger[Swagger UI]
+        end
+
+        subgraph PostgreSQL["PostgreSQL"]
+            UsersTable[Таблица users]
+            FilesTable[Таблица files]
+        end
+
+        FileStorage[Файловое хранилище<br/>uploads/]
+    end
+
+    subgraph Docker["Docker контейнеры"]
+        DockerCompose[Docker Compose]
+        PostgresContainer[Контейнер PostgreSQL<br/>Порт: 5432<br/>Volume: postgres_data]
+    end
+
+    subgraph External["Внешние сервисы"]
+        JWTService[JWT Service]
+        TypeORM[TypeORM]
+        Multer[Multer]
+        Passport[Passport.js]
+    end
+
+    %% Связи клиента
+    Browser -->|HTTPS запросы| Internet
+    Internet -->|HTTP/HTTPS| NextJS
+
+    %% Связи Frontend
+    ReactApp --> APIClient
+    APIClient --> Store
+    ReactApp --> UIComponents
+    APIClient -->|HTTP запросы| RESTAPI
+
+    %% Связи Backend
+    RESTAPI --> AuthModule
+    RESTAPI --> UsersModule
+    RESTAPI --> FilesModule
+    RESTAPI --> Swagger
+
+    AuthModule --> Passport
+    AuthModule --> JWTService
+    UsersModule --> TypeORM
+    FilesModule --> TypeORM
+    FilesModule --> Multer
+    FilesModule --> FileStorage
+
+    %% Связи с базой данных
+    TypeORM --> PostgreSQL
+    PostgreSQL --> UsersTable
+    PostgreSQL --> FilesTable
+
+    %% Docker связи
+    DockerCompose --> PostgresContainer
+    PostgresContainer --> PostgreSQL
+
+    %% Внешние зависимости
+    AuthModule -.-> JWTService
+    UsersModule -.-> TypeORM
+    FilesModule -.-> TypeORM
+    FilesModule -.-> Multer
+
+    style Client fill:#e3f2fd
+    style Server fill:#fff4e1
+    style Docker fill:#e8f5e9
+    style External fill:#f3e5f5
+    style Internet fill:#fce4ec
+```
