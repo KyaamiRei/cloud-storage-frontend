@@ -2,12 +2,14 @@ graph TB
     User[Пользователь]
 
     subgraph Auth["Аутентификация"]
+        direction TB
         UC1[Зарегистрироваться]
         UC2[Войти в систему]
         UC3[Просмотреть профиль]
     end
 
     subgraph Files["Управление файлами"]
+        direction TB
         UC4[Загрузить файл]
         UC5[Просмотреть файлы]
         UC6[Скачать файл]
@@ -22,15 +24,6 @@ graph TB
         UC12[Просмотреть статистику]
     end
 
-    User --> UC1
-    User --> UC2
-    User --> UC3
-    User --> UC4
-    User --> UC5
-    User --> UC6
-    User --> UC7
-    User --> UC8
-    User --> UC9
-    User --> UC10
-    User --> UC11
-    User --> UC12
+    User --> Auth
+    User --> Files
+    User --> Stats
