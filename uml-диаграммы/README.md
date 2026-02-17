@@ -128,6 +128,25 @@ npm install -g @mermaid-js/mermaid-cli
 mmdc -i диаграмма.mmd -o диаграмма.png
 ```
 
+#### Конвертация в изображения
+Для конвертации всех диаграмм в PNG изображения:
+
+**Windows:**
+- Двойной клик на `convert-all.bat` (требуется установленный Mermaid CLI)
+- Или в PowerShell: `.\convert-all.bat`
+
+**Node.js скрипт:**
+```bash
+node convert-all.js
+```
+
+**Ручная конвертация одной диаграммы:**
+```bash
+mmdc -i 1-диаграмма-классов-упрощенная.mmd -o 1-диаграмма-классов-упрощенная.png -w 2400 -H 1800
+```
+
+Подробные инструкции см. в файле `convert-to-images.md`
+
 ### PlantUML
 
 #### Онлайн просмотр
