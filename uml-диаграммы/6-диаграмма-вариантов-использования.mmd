@@ -18,17 +18,8 @@ graph TB
         UC11[Поиск файлов]
     end
 
-    subgraph Categories["Категории и корзина"]
-        UC12[Фотографии]
-        UC13[Документы]
-        UC14[Видео]
-        UC15[Аудио]
-        UC16[Просмотреть корзину]
-        UC17[Очистить корзину]
-    end
-
     subgraph Stats["Статистика"]
-        UC18[Просмотреть статистику]
+        UC12[Просмотреть статистику]
     end
 
     User --> UC1
@@ -43,9 +34,3 @@ graph TB
     User --> UC10
     User --> UC11
     User --> UC12
-    User --> UC13
-    User --> UC14
-    User --> UC15
-    User --> UC16
-    User --> UC17
-    User --> UC18
