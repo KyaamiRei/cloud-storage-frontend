@@ -59,6 +59,7 @@ sequenceDiagram
     
     alt Пользователь найден и пароль верный
         AuthSvc-->>LocalStrategy: UserEntity (без password)
+        deactivate AuthSvc
         LocalStrategy-->>LocalGuard: UserEntity
         deactivate LocalStrategy
         LocalGuard-->>AuthCtrl: req.user = UserEntity

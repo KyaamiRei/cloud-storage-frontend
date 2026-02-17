@@ -39,7 +39,7 @@ classDiagram
         +findAll(userId: number, fileType?: FileType) Promise~FileEntity[]~
         +create(file: Express.Multer.File, userId: string) Promise~FileEntity~
         +remove(userId: string, ids: string) Promise~void~
-        +restore(userId: string, ids: string) Promise~{restored: number}~
+        +restore(userId: string, ids: string) Promise~object~
         +toggleFavorite(userId: number, fileId: number) Promise~FileEntity~
         +getFavorites(userId: number) Promise~FileEntity[]~
     }
@@ -48,8 +48,8 @@ classDiagram
         -UsersService userService
         -JwtService jwtService
         +validateUser(email: string, password: string) Promise~any~
-        +register(dto: CreateUserDto) Promise~{token: string}~
-        +login(user: UserEntity) Promise~{token: string}~
+        +register(dto: CreateUserDto) Promise~object~
+        +login(user: UserEntity) Promise~object~
     }
 
     class UsersController {
@@ -62,20 +62,20 @@ classDiagram
         +findAll(userId: number, fileType?: FileType) Promise~FileEntity[]~
         +create(file: Express.Multer.File, userId: string) Promise~FileEntity~
         +remove(userId: string, ids: string) Promise~void~
-        +restore(userId: string, ids: string) Promise~{restored: number}~
+        +restore(userId: string, ids: string) Promise~object~
         +toggleFavorite(userId: number, id: number) Promise~FileEntity~
         +getFavorites(userId: number) Promise~FileEntity[]~
     }
 
     class AuthController {
         -AuthService authService
-        +login(dto: CreateUserDto) Promise~{token: string}~
-        +register(dto: CreateUserDto) Promise~{token: string}~
+        +login(dto: CreateUserDto) Promise~object~
+        +register(dto: CreateUserDto) Promise~object~
     }
 
     class JwtStrategy {
         -UsersService userService
-        +validate(payload: {id: string}) Promise~{id: number}~
+        +validate(payload: object) Promise~object~
     }
 
     class LocalStrategy {
