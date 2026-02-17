@@ -1,0 +1,22 @@
+erDiagram
+    ПОЛЬЗОВАТЕЛЬ {
+        int id PK "Первичный ключ"
+        string email "Электронная почта, уникальная"
+        string password "Хеш пароля"
+        string fullName "Полное имя пользователя"
+    }
+
+    ФАЙЛ {
+        int id PK "Первичный ключ"
+        string filename "Имя файла на сервере"
+        string originalname "Оригинальное имя файла"
+        int size "Размер файла в байтах"
+        string mimetype "MIME-тип файла"
+        int userId FK "Внешний ключ на пользователя"
+        datetime createdAt "Дата и время создания"
+        datetime deletedAt "Дата и время удаления (soft delete)"
+        boolean isFavorite "Флаг избранного файла"
+    }
+
+    ПОЛЬЗОВАТЕЛЬ ||--o{ ФАЙЛ : "владеет"
+    ФАЙЛ }o--|| ПОЛЬЗОВАТЕЛЬ : "принадлежит"
